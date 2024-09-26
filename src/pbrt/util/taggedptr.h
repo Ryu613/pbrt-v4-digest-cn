@@ -731,7 +731,11 @@ struct ReturnTypeConst {
 
 }  // namespace detail
 
-// TaggedPointer Definition
+/*
+    此类是为了实现2个目的:
+    1. 解决复杂场景下C++原生虚表内存占用高的问题
+    2. 解决由于CPU和GPU在函数调用时内存地址不同，同一函数无法直接通用的问题
+*/
 template <typename... Ts>
 class TaggedPointer {
   public:

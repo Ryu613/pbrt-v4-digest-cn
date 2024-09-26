@@ -15,7 +15,14 @@
 
 namespace pbrt {
 
-// CameraSample Definition
+/*
+    包含了相机光线需要的所有样本值
+    pFilm: 这条光线在胶片上的对应点的位置，这个点带有光辐射的量
+    pLens: 这条光线通过镜头时的点的位置
+    time: 光线采样的时间点，若镜头会移动，则代表当生成光线时，相机所在的位置
+    filterWeight: 这条光线的辐射量的缩放因子，是为了重建过滤器为每个像素点过滤图像样本时使用
+
+*/
 struct CameraSample {
     Point2f pFilm;
     Point2f pLens;

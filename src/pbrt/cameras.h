@@ -23,7 +23,10 @@
 
 namespace pbrt {
 
-// CameraTransform Definition
+/*
+    封装各个坐标空间之间的转换过程
+    该类维护了两类转换：从相机空间到渲染空间，从渲染空间到世界空间
+*/
 class CameraTransform {
   public:
     // CameraTransform Public Methods
@@ -83,9 +86,15 @@ class CameraTransform {
         return renderFromCamera.ApplyInverse(v, time);
     }
 
+    /*
+        动画效果只有在相机空间中才能进行，在渲染空间进行有损性能
+    */
     PBRT_CPU_GPU
     const AnimatedTransform &RenderFromCamera() const { return renderFromCamera; }
 
+    /*
+        不能动画化
+    */
     PBRT_CPU_GPU
     const Transform &WorldFromRender() const { return worldFromRender; }
 
@@ -113,13 +122,18 @@ struct CameraWiSample {
     Interaction pRef, pLens;
 };
 
-// CameraRay Definition
+/*
+    包含了光线和光谱权重，简单的相机模型中，光谱权重默认为1，但是对于复杂的相机模型，
+    比如RealisticCamera，为了模拟辐射度量学下的图像生成过程，权重就不是1
+*/
 struct CameraRay {
     Ray ray;
     SampledSpectrum weight = SampledSpectrum(1);
 };
 
-// CameraRayDifferential Definition
+/*
+    与CameraRay基本等同，只是用于存储带有微分量的光线
+*/ 
 struct CameraRayDifferential {
     RayDifferential ray;
     SampledSpectrum weight = SampledSpectrum(1);
