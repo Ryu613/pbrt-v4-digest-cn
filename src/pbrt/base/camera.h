@@ -93,7 +93,7 @@ class Camera : public TaggedPointer<PerspectiveCamera, OrthographicCamera,
     void InitMetadata(ImageMetadata *metadata) const;
 
     /*
-        
+        Camera接口的实现类必须使CameraTransform类可以用于其他坐标空间
     */
     PBRT_CPU_GPU inline const CameraTransform &GetCameraTransform() const;
 

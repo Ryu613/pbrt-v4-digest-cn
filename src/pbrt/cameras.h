@@ -26,6 +26,9 @@ namespace pbrt {
 /*
     封装各个坐标空间之间的转换过程
     该类维护了两类转换：从相机空间到渲染空间，从渲染空间到世界空间
+    Camera的实现类必须使此类支持其他系统的坐标空间
+
+    这个类提供了各种重载函数，用于在各种坐标空间里变换。
 */
 class CameraTransform {
   public:
@@ -150,7 +153,9 @@ struct CameraBaseParameters {
                          const ParameterDictionary &parameters, const FileLoc *loc);
 };
 
-// CameraBase Definition
+/*
+    camera接口的通用功能，所有camera实现继承此类
+*/
 class CameraBase {
   public:
     // CameraBase Public Methods
@@ -207,6 +212,9 @@ class CameraBase {
 
     // CameraBase Protected Methods
     CameraBase() = default;
+    /*
+        
+    */
     CameraBase(CameraBaseParameters p);
 
     PBRT_CPU_GPU
