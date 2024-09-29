@@ -142,7 +142,15 @@ struct CameraRayDifferential {
     SampledSpectrum weight = SampledSpectrum(1);
 };
 
-// CameraBaseParameters Definition
+/*
+    CameraTransForm: 最重要的类，把相机坐标变换成场景所用的坐标
+    
+    shutterOpen, shutterClose: 快门的开关时间
+
+    Film: 存储最终图像，且模拟了胶片的传感器
+
+    Medium: 相机要考虑的介质
+*/
 struct CameraBaseParameters {
     CameraTransform cameraTransform;
     Float shutterOpen = 0, shutterClose = 1;
@@ -154,7 +162,7 @@ struct CameraBaseParameters {
 };
 
 /*
-    camera接口的通用功能，所有camera实现继承此类
+    camera接口的通用功能实现在此，所有camera实现须继承此类
 */
 class CameraBase {
   public:
@@ -212,11 +220,19 @@ class CameraBase {
 
     // CameraBase Protected Methods
     CameraBase() = default;
-    /*
-        
-    */
+
     CameraBase(CameraBaseParameters p);
 
+    /*
+        通过多次调用camera的GenerateRay()函数来计算光线的微分量
+
+        camera的实现类必须实现此函数，但是那些方法之后还是会调用此函数
+        (注意，函数的签名不同于实现类中的那个)
+
+        相机的各种实现类会传入this指针(camera入参)，这会允许此函数调用对应camera的
+        GenerateRay()函数。这种额外复杂性的引入是由于我们没在camera接口使用虚函数，
+        这意味着CameraBase类需要有camera传入才能调用GenerateRay()方法
+    */
     PBRT_CPU_GPU
     static pstd::optional<CameraRayDifferential> GenerateRayDifferential(
         Camera camera, CameraSample sample, SampledWavelengths &lambda);
@@ -265,6 +281,9 @@ class CameraBase {
 };
 
 // ProjectiveCamera Definition
+/*
+    投影相机： 从3d场景转换到2d图像的抽象，继承有正交和透视投影相机
+*/
 class ProjectiveCamera : public CameraBase {
   public:
     // ProjectiveCamera Public Methods
@@ -273,6 +292,15 @@ class ProjectiveCamera : public CameraBase {
 
     std::string BaseToString() const;
 
+    /*
+        除了CameraBase类需要的参数外，ProjectiveCamera也需拿到投影变换矩阵参数，
+        屏幕空间的范围就是图像的范围，还有焦距参数和透镜光圈大小的参数。
+        如果光圈不是一个无穷小的孔，那么图像中的一部分可能会模糊(在真实的透镜系统中，
+        聚焦范围外的物体会模糊)
+
+        ProjectiveCamera的继承类会把投影变换传到基类的构造器中，提供了相机到屏幕
+        空间的投影转换。因此，构造器能更方便的从光栅空间转换到相机空间
+    */
     ProjectiveCamera(CameraBaseParameters baseParameters,
                      const Transform &screenFromCamera, Bounds2f screenWindow,
                      Float lensRadius, Float focalDistance)
@@ -282,6 +310,9 @@ class ProjectiveCamera : public CameraBase {
           focalDistance(focalDistance) {
         // Compute projective camera transformations
         // Compute projective camera screen transformations
+        /*
+            从屏幕空间转换到光栅空间，注意y轴是反过来的
+        */
         Transform NDCFromScreen =
             Scale(1 / (screenWindow.pMax.x - screenWindow.pMin.x),
                   1 / (screenWindow.pMax.y - screenWindow.pMin.y), 1) *
