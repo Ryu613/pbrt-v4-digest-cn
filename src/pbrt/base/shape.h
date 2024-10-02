@@ -43,10 +43,19 @@ class Shape
         Allocator alloc);
     std::string ToString() const;
 
+    /*
+        每个Shape实现都必须能包围它本身，用Bounds3f来封装，返回的包围盒需要是渲染坐标系下的坐标
+    */
     PBRT_CPU_GPU inline Bounds3f Bounds() const;
 
+    /*
+        把这个Shape表面的法线包围其中，用于在光线计算中，检测某点是否能被发光体照到
+    */
     PBRT_CPU_GPU inline DirectionCone NormalBounds() const;
 
+    /*
+        Shape的实现必须提供2个函数
+    */
     PBRT_CPU_GPU inline pstd::optional<ShapeIntersection> Intersect(
         const Ray &ray, Float tMax = Infinity) const;
 

@@ -33,6 +33,14 @@
 namespace pbrt {
 
 // PixelSensor Definition
+/*
+    对感光元件的像素色彩度量进行了半理想化的建模:
+    1. 曝光控制: 图像明暗可以由用户控制
+    2. RGB感应：基于光谱感应曲线，模拟光谱辐射量到三原色的转换
+    3. 白平衡： 相机对捕获的图像进行处理，包括对初始RGB值根据光照色彩来调整，
+       来模拟人类视觉系统中的色彩适应过程。因此，捕获的图像在视觉上看起来与
+       人类观察者在拍照时记忆中的图像相似
+*/
 class PixelSensor {
   public:
     // PixelSensor Public Methods
