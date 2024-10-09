@@ -37,6 +37,9 @@ struct LightLiSample;
 struct LightLeSample;
 
 // Light Definition
+/*
+    所有光源必须实现此接口
+*/
 class Light : public TaggedPointer<  // Light Source Types
                   PointLight, DistantLight, ProjectionLight, GoniometricLight, SpotLight,
                   DiffuseAreaLight, UniformInfiniteLight, ImageInfiniteLight,
@@ -57,8 +60,21 @@ class Light : public TaggedPointer<  // Light Source Types
                             const MediumInterface &mediumInterface, const Shape shape,
                             FloatTexture alpha, const FileLoc *loc, Allocator alloc);
 
+    /*
+        所有光源必须能返回它们发出的光辐射通量Phi，也方便从PowerLightSampler采样到辐射通量的相对值
+        在对光照贡献最大的的地方投入更多采样能极大改善渲染效率
+    */
     SampledSpectrum Phi(SampledWavelengths lambda) const;
 
+    /*
+        Light接口并没有对所有类型的光源做抽象，为了效率和正确性，pbrt中的积分器有时需要根据
+        不同类型的光源做不同的处理
+        type分为四种类型:
+        1. DeltaPosition: delta即狄拉克delta分布，也就是空间中的点光源
+        2. DeltaDirection: 光只在某个方向发出
+        3. Area: 光从一个几何表面发出
+        4. Infinite: 光没有几何形状，在无限远处
+    */
     PBRT_CPU_GPU inline LightType Type() const;
 
     PBRT_CPU_GPU inline pstd::optional<LightLiSample> SampleLi(

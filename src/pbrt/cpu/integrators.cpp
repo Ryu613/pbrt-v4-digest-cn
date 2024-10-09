@@ -96,15 +96,30 @@ void ImageTileIntegrator::Render() {
     });
 
     // Declare common variables for rendering image in tiles
+    // 为了把图像按图块渲染，声明一些通用的变量
+    // 先分配一点内存来暂存物体表面散射相关的属性，用来计算每条光辐射贡献
+    // 预分配内存是为了避免大量光线计算时，在多线程并发new时，影响系统对内存的管理功能，进而影响性能
+    // 若不预先分配内存，可能导致系统得内存分配得耗时占据了大部分的计算时间
+    // 为了解决这个问题，这里提供了ScratchBuffer类来管理一小块预分配好的内存作为缓冲。
+    // 这个缓冲区通过增量偏移来确认内存位置，缓冲区里的内存块不允许被单独释放，只能一起释放。释放也就只是把偏移量重置就可以了
+    // 由于这个类不是线程安全的，利用ThreadLocal模板类，为每个线程创建单独的一个ScratchBuffer
+    // 这个类的构造器根据lambda函数，根据ThreadLocal管理的对象的类型，来返回新的实例
+    // 之后ThreadLocal会负责维护和管理每个线程的这些对象。
     ThreadLocal<ScratchBuffer> scratchBuffers([]() { return ScratchBuffer(); });
-
+    // 由于每个线程不能使用同一个采样点，也需要用ThreadLocal来管理每个线程的Sampler对象
+    // Sampler提供了Clone()函数来根据它的类型来创建新的实例
+    // Sampler一开始是通过构造器提供的，后续是通过samplerPrototype拷贝的
     ThreadLocal<Sampler> samplers([this]() { return samplerPrototype.Clone(); });
-
     Bounds2i pixelBounds = camera.GetFilm().PixelBounds();
+    // 像素点采样的数量
     int spp = samplerPrototype.SamplesPerPixel();
+    // ProgressReporter用于提示用户渲染进展，第一个参数就是处理的任务的总数
+    // 这里，任务的总数就是每个像素点的采样个数，乘以总的像素点个数
+    // 这里有必要使用64位精度的数字来计算，因为对于高精度图像，每个像素点会有很多采样点，计算以后精度不够
     ProgressReporter progress(int64_t(spp) * pixelBounds.Area(), "Rendering",
                               Options->quiet);
-
+    // 当前轮取的采样点个数起止用waveStart和waveEnd表示
+    // 下一轮要取得采样点总数用nextWaveSize表示
     int waveStart = 0, waveEnd = 1, nextWaveSize = 1;
 
     if (Options->recordPixelStatistics)
@@ -159,26 +174,42 @@ void ImageTileIntegrator::Render() {
     }
 
     // Render image in waves
+    // 分轮次渲染图像
+    // 只要当前轮的采样点开始没到采样总数
     while (waveStart < spp) {
         // Render current wave's image tiles in parallel
+        // 并行地渲染当前轮数的图块
+        // 这个函数并行地循环整个图块，并行相关的功能函数参考B.6.A
+        // 这个函数会自动选取合适的图块大小，主要考虑2个方面:
+        // 1. 图块数量会远多于处理器个数，很可能某些图块处理起来快于其他图块
+        // 所以如果把图块1对一分给处理器，很可能某些处理器处理完后就会空闲，其他处理器还在忙碌
+        // 2.
+        // 图块太多也会影响处理效率，在并行线程请求任务时，会有微小的固定性能开销，图块越多，这个开销消耗的时间越多
+        // 因此，这个函数选取的图块大小综合考虑要处理的区域和系统的处理器数量
         ParallelFor2D(pixelBounds, [&](Bounds2i tileBounds) {
             // Render image tile given by _tileBounds_
+            // 根据图块边界tileBounds渲染图块
+            // 先请求线程对应的ScratchBuffer和Sampler
             ScratchBuffer &scratchBuffer = scratchBuffers.Get();
             Sampler &sampler = samplers.Get();
             PBRT_DBG("Starting image tile (%d,%d)-(%d,%d) waveStart %d, waveEnd %d\n",
                      tileBounds.pMin.x, tileBounds.pMin.y, tileBounds.pMax.x,
                      tileBounds.pMax.y, waveStart, waveEnd);
+            // 根据图块边界遍历每个像素pPixel
             for (Point2i pPixel : tileBounds) {
+                // <<每个像素点根据采样点来渲染>>
                 StatsReportPixelStart(pPixel);
                 threadPixel = pPixel;
                 // Render samples in pixel _pPixel_
                 for (int sampleIndex = waveStart; sampleIndex < waveEnd; ++sampleIndex) {
                     threadSampleIndex = sampleIndex;
+                    // 为像素点生成采样点，同时设置一些内部的状态
                     sampler.StartPixelSample(pPixel, sampleIndex);
+					// 负责确定特定采样点的值，然后会通过调用ScratchBuffer::Reset()来释放这部分临时内存
                     EvaluatePixelSample(pPixel, sampleIndex, sampler, scratchBuffer);
                     scratchBuffer.Reset();
                 }
-
+                // 把处理进度通知到ProgressReporter
                 StatsReportPixelEnd(pPixel);
             }
             PBRT_DBG("Finished image tile (%d,%d)-(%d,%d)\n", tileBounds.pMin.x,
@@ -187,6 +218,7 @@ void ImageTileIntegrator::Render() {
         });
 
         // Update start and end wave
+        // 把每轮的开始和结束，包括下一轮的数量都更新
         waveStart = waveEnd;
         waveEnd = std::min(spp, waveEnd + nextWaveSize);
         if (!referenceImage)
@@ -195,6 +227,7 @@ void ImageTileIntegrator::Render() {
             progress.Done();
 
         // Optionally write current image to disk
+        // 若用户在命令行写了"-write-partial-images",那么处理中的图片会在下一轮处理完之前，写到硬盘里
         if (waveStart == spp || Options->writePartialImages || referenceImage) {
             LOG_VERBOSE("Writing image with spp = %d", waveStart);
             ImageMetadata metadata;
@@ -224,23 +257,50 @@ void ImageTileIntegrator::Render() {
 }
 
 // RayIntegrator Method Definitions
+// 派生类必须实现如何确定特定采样点的值
 void RayIntegrator::EvaluatePixelSample(Point2i pPixel, int sampleIndex, Sampler sampler,
                                         ScratchBuffer &scratchBuffer) {
     // Sample wavelengths for the ray
+    // <<为光线采样其光波波长>>
+    // 每一束光都带有离散的多个波长的辐射量(默认4个波长)
+    // 当为每个像素计算颜色值时，pbrt
+    // 在不同的像素采样中选择不同的波长，这样最终结果可以更好地反映所有波长的正确结果
+    // 为了选取这些波长，lu这个样本值会被Sampler提供，lu会在[0,1)之间
     Float lu = sampler.Get1D();
     if (Options->disableWavelengthJitter)
         lu = 0.5;
+    // SampleWavelengths()会把lu映射到特定的一组波长(根据胶片传感器响应与波长关系的模型)
+    // 大部分Sampler实现保证了，若一个像素点有多个采样点，这些采样点在[0,1)之间分布均匀
+    // 反过来说，为了保证图片质量，也需要光的波长在[0,1)之间较均匀的分布(避免色彩不准)
     SampledWavelengths lambda = camera.GetFilm().SampleWavelengths(lu);
 
     // Initialize _CameraSample_ for current sample
+    // <<为当前采样初始化CameraSample>>
+    // CameraSample用来记录胶片上的位置，与相机生成的光线位置对应
+    // 相机生成光线的位置的选取，取决于采样点的位置和像素点对应的重建滤波器
+    // GetCameraSample就是用来完成以上操作的
+    // CameraSample同时记录了光线相关的时间，和镜头位置采样值，
+    // 用于渲染包含运动物体的场景和模拟非针孔光圈的相机模型
     Filter filter = camera.GetFilm().GetFilter();
     CameraSample cameraSample = GetCameraSample(sampler, pPixel, filter);
 
     // Generate camera ray for current sample
+    // << 在当前采样上生成相机光>>
+    // 相机接口提供了两个函数来生成光线
+    // GenerateRay()：根据给定的样本位置，生成光线
+    // GenerateRayDifferential(): 返回一个光线微分量，包含了相机在图像平面上 x 和 y
+    // 方向上相隔一个像素的采样点所生成的光线信息
+    // 光线微分量用于在某些材质下获得更好的结果，详见第10章
+    // 这个光线差分量可以用于计算像素间的纹理变化的程度，对于纹理的反锯齿来说至关重要
+    // 一些CameraSample值可能对于给定的相机来说，没有合适的光线，因此，返回值使optional的
     pstd::optional<CameraRayDifferential> cameraRay =
         camera.GenerateRayDifferential(cameraSample, lambda);
 
     // Trace _cameraRay_ if valid
+    // <<若cameraRay有效，则跟踪光线>>
+    // 在做完一些准备工作后，会把这个光传到光线积分器的派生类的Li()函数
+    // 为了能返回光线L的辐射量，这个派生类还要负责初始化VisibleSurface类的实例
+    // 这个实例用于为每个像素点，收集关于交点所在表面的几何信息，用于Film里面来储存
     SampledSpectrum L(0.);
     VisibleSurface visibleSurface;
     if (cameraRay) {
@@ -248,6 +308,9 @@ void RayIntegrator::EvaluatePixelSample(Point2i pPixel, int sampleIndex, Sampler
         DCHECK_GT(Length(cameraRay->ray.d), .999f);
         DCHECK_LT(Length(cameraRay->ray.d), 1.001f);
         // Scale camera ray differentials based on image sampling rate
+        // <<根据图像的采样频率，缩放相机光线的微分量>>
+        // 在传到Li()函数前，ScaleDifferentials()函数会把光的微分量做缩放
+        // 这种缩放是为了某个像素多个采样点的时候，用于表示胶片所在面的样本之间的实际间隔
         Float rayDiffScale =
             std::max<Float>(.125f, 1 / std::sqrt((Float)sampler.SamplesPerPixel()));
         if (!Options->disablePixelJitter)
@@ -255,11 +318,18 @@ void RayIntegrator::EvaluatePixelSample(Point2i pPixel, int sampleIndex, Sampler
 
         ++nCameraRays;
         // Evaluate radiance along camera ray
+        // <<计算相机光的辐射量>>
+        // 对于没有储存每个像素点几何信息的Film实现，可以省下填充VisibleSurface对象的工作
+        // 因此，只有在必要的时候才把这个值传入Li()函数，积分器的实现只有在VisibleSurface指针不为空的时候做初始化
+        // CameraRayDifferential也携带了用来缩放光辐射量的权重值，对于简单的相机模型，每一束光的权重是相等的
+        // 但是为了模拟相机不同的镜片系统的成像过程，可能某些光对光辐射量的贡献要大于其他的光
+        // 比如，光晕效果，就是胶片平面边缘的光辐射量小于中心区域的光的辐射量
         bool initializeVisibleSurface = camera.GetFilm().UsesVisibleSurface();
         L = cameraRay->weight * Li(cameraRay->ray, lambda, sampler, scratchBuffer,
                                    initializeVisibleSurface ? &visibleSurface : nullptr);
 
         // Issue warning if unexpected radiance value is returned
+        // <<对于非预期计算错误的值，进行warn>>
         if (L.HasNaNs()) {
             LOG_ERROR("Not-a-number radiance value returned for pixel (%d, "
                       "%d), sample %d. Setting to black.",
@@ -284,6 +354,9 @@ void RayIntegrator::EvaluatePixelSample(Point2i pPixel, int sampleIndex, Sampler
 			             .c_str());
     }
     // Add camera ray's contribution to image
+    // <<为图片添加相机光对其的光贡献>>
+    // 在到达光源的辐射量已知后，调用addSample()来更新对应像素点，为采样加上辐射量的权重
+    // 关于如何在胶片中进行采样，详见5.4和8.8
     camera.GetFilm().AddSample(pPixel, L, lambda, &visibleSurface,
                                cameraSample.filterWeight);
 }
