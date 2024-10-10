@@ -182,9 +182,8 @@ void ImageTileIntegrator::Render() {
         // 这个函数并行地循环整个图块，并行相关的功能函数参考B.6.A
         // 这个函数会自动选取合适的图块大小，主要考虑2个方面:
         // 1. 图块数量会远多于处理器个数，很可能某些图块处理起来快于其他图块
-        // 所以如果把图块1对一分给处理器，很可能某些处理器处理完后就会空闲，其他处理器还在忙碌
-        // 2.
-        // 图块太多也会影响处理效率，在并行线程请求任务时，会有微小的固定性能开销，图块越多，这个开销消耗的时间越多
+        // 所以如果把图块一对一分给处理器，很可能某些处理器处理完后就会空闲，其他处理器还在忙碌
+        // 2. 图块太多也会影响处理效率，在并行线程请求任务时，会有微小的固定性能开销，图块越多，这个开销消耗的时间越多
         // 因此，这个函数选取的图块大小综合考虑要处理的区域和系统的处理器数量
         ParallelFor2D(pixelBounds, [&](Bounds2i tileBounds) {
             // Render image tile given by _tileBounds_
@@ -291,7 +290,7 @@ void RayIntegrator::EvaluatePixelSample(Point2i pPixel, int sampleIndex, Sampler
     // GenerateRayDifferential(): 返回一个光线微分量，包含了相机在图像平面上 x 和 y
     // 方向上相隔一个像素的采样点所生成的光线信息
     // 光线微分量用于在某些材质下获得更好的结果，详见第10章
-    // 这个光线差分量可以用于计算像素间的纹理变化的程度，对于纹理的反锯齿来说至关重要
+    // 这个光线微分量可以用于计算像素间的纹理变化的程度，对于纹理的反锯齿来说至关重要
     // 一些CameraSample值可能对于给定的相机来说，没有合适的光线，因此，返回值使optional的
     pstd::optional<CameraRayDifferential> cameraRay =
         camera.GenerateRayDifferential(cameraSample, lambda);

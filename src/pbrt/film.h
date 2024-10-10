@@ -139,6 +139,10 @@ inline Triplet PixelSensor::ProjectReflectance(Spectrum refl, Spectrum illum, Sp
 }
 
 // VisibleSurface Definition
+/*
+    持有某个表面某点的各种信息， 除了法线，着色法线，时间以外，
+    还储存了每个像素点的深度的偏导数,
+*/
 class VisibleSurface {
   public:
     // VisibleSurface Public Methods
@@ -158,8 +162,11 @@ class VisibleSurface {
     Normal3f n, ns;
     Point2f uv;
     Float time = 0;
+    // 每个像素点的偏导数,用于图像去噪
     Vector3f dpdx, dpdy;
+    // 反射率，用于在去噪前把纹理从光照中分离
     SampledSpectrum albedo;
+    // 检测VisibleSurface是否已被初始化
     bool set = false;
 };
 

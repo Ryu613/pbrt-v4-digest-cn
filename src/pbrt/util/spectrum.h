@@ -266,6 +266,11 @@ class SampledSpectrum {
 };
 
 // SampledWavelengths Definitions
+/*
+    这个类存储了某个有样本的SampledSpectrum对象的波长。
+    这样做不仅能跟踪某个独立的SampledSpectrum的SampledWavelengths，
+    而且也不会在具有多个波段样本的SampledSpectrums的时候有任何组合操作
+*/
 class SampledWavelengths {
   public:
     // SampledWavelengths Public Methods

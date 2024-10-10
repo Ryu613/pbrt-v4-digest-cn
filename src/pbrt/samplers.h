@@ -453,6 +453,9 @@ class IndependentSampler {
     PBRT_CPU_GPU
     int SamplesPerPixel() const { return samplesPerPixel; }
 
+    /*
+        用p点坐标和种子数做哈希，作为伪随机数的序列，然后为序列加入初始偏移
+    */
     PBRT_CPU_GPU
     void StartPixelSample(Point2i p, int sampleIndex, int dimension) {
         rng.SetSequence(Hash(p, seed));
