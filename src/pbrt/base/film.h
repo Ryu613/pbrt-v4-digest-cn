@@ -33,7 +33,7 @@ class Film : public TaggedPointer<RGBFilm, GBufferFilm, SpectralFilm> {
         2. 样本的光谱辐射度L
         3. 样本的波长lambda
         4. 可选，沿着样本的相机光线碰到的第一个几何体VisibleSurface
-        5. 计算过滤器采样时的样本权重weight
+        5. 计算滤波器采样时的样本权重weight
     */
     PBRT_CPU_GPU inline void AddSample(Point2i pFilm, SampledSpectrum L,
                                        const SampledWavelengths &lambda,

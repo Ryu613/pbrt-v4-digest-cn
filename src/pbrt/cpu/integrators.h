@@ -191,8 +191,6 @@ class RandomWalkIntegrator : public RayIntegrator {
         // 渲染公式里第一个量Le(p,wo)，是代表照出来的光的辐射量，通过调用SurfaceInteraction::Le()获取
         Vector3f wo = -ray.d;
         // 这里用来获取光线方向上发出的光的辐射量，若物体不是发光体，这部分就返回光谱分布为0的量
-        // 渲染公式里的第二项是一个积分式，要求p点为球心的积分，这里可以用蒙特卡洛积分
-        // 在p点任取方向w',那么可以估计出这个积分约等于这个点的光辐射量乘以dwi微元的总和
         SampledSpectrum Le = isect.Le(wo, lambda);
 
         // Terminate random walk if maximum depth has been reached
@@ -208,6 +206,8 @@ class RandomWalkIntegrator : public RayIntegrator {
 
         // Randomly sample direction leaving surface for random walk
         // <<为离开表面的w'方向采样>>
+        // 渲染公式里的第二项是一个积分式，要求p点为球心的积分，这里可以用蒙特卡洛积分
+        // 在p点任取方向w',那么可以估计出这个积分约等于这个点的光辐射量乘以dwi微元的总和
         Point2f u = sampler.Get2D();
         // SampleUniformSphere返回u点对应的单位球面的均匀分布随机单位向量
         Vector3f wp = SampleUniformSphere(u);

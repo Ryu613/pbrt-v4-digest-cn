@@ -23,6 +23,9 @@
 namespace pbrt {
 
 // Interaction Definition
+/*
+    光与物体表面交互过程中涉及到的参数，包括介质下的光传播
+*/
 class Interaction {
   public:
     // Interaction Public Methods
@@ -155,6 +158,9 @@ class MediumInteraction : public Interaction {
 };
 
 // SurfaceInteraction Definition
+/*
+    交点对应表面的一些几何相关的量
+*/
 class SurfaceInteraction : public Interaction {
   public:
     // SurfaceInteraction Public Methods

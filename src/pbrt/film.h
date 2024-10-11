@@ -171,9 +171,18 @@ class VisibleSurface {
 };
 
 // FilmBaseParameters Definition
+
 struct FilmBaseParameters {
     FilmBaseParameters(const ParameterDictionary &parameters, Filter filter,
                        const PixelSensor *sensor, const FileLoc *loc);
+    /*
+        图像的整体分辨率fullResolution
+        整个图像的边界框pixelBounds
+        滤波器filter
+        像素感光器sensor
+        胶片的对角线长度diagonal
+        输出图片的文件名filename
+    */
     FilmBaseParameters(Point2i fullResolution, Bounds2i pixelBounds, Filter filter,
                        Float diagonal, const PixelSensor *sensor, std::string filename)
         : fullResolution(fullResolution),

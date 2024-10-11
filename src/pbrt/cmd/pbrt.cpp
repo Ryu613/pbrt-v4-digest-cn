@@ -104,9 +104,12 @@ Reformatting options:
 // main program
 int main(int argc, char *argv[]) {
     // Convert command-line arguments to vector of strings
+    // 把命令行里的参数转换为字符串列表
     std::vector<std::string> args = GetCommandLineArguments(argv);
 
     // Declare variables for parsed command line
+    // 为这些处理好的字符串声明一些变量
+    // PBRT存储了各种适合放在命令行里的渲染参数，后续会被传到InitPBRT()函数中
     PBRTOptions options;
     std::vector<std::string> filenames;
     std::string logLevel = "error";
@@ -270,6 +273,8 @@ int main(int argc, char *argv[]) {
     options.logLevel = LogLevelFromString(logLevel);
 
     // Initialize pbrt
+    // 处理命令行的参数
+    // 初始化pbrt
     InitPBRT(options);
 
     if (format || toPly || options.upgrade) {
@@ -277,18 +282,24 @@ int main(int argc, char *argv[]) {
         ParseFiles(&formattingTarget, filenames);
     } else {
         // Parse provided scene description files
+        // 处理提供的场景描述文件
         BasicScene scene;
         BasicSceneBuilder builder(&scene);
         ParseFiles(&builder, filenames);
 
         // Render the scene
+        // 渲染该场景
+        // RenderWaveFront支持CPU和GPU渲染，可以并行地处理百万级别的图像采样，详见15章
         if (Options->useGPU || Options->wavefront)
             RenderWavefront(scene);
         else
+            // 在CPU上渲染，使用Intergrator(积分器)实现，
+            // 比起wavefront并行数量低得多，根据并行的CPU线程数来决定图像采样的数量
             RenderCPU(scene);
 
         LOG_VERBOSE("Memory used after post-render cleanup: %s", GetCurrentRSS());
         // Clean up after rendering the scene
+        // 渲染后的资源清理工作
         CleanupPBRT();
     }
     return 0;
