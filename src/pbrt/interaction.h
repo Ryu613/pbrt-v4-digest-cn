@@ -24,7 +24,7 @@ namespace pbrt {
 
 // Interaction Definition
 /*
-    光与物体表面交互过程中涉及到的参数，包括介质下的光传播
+    光(在介质种)与物体表面相互作用，也可用于表示介质与介质之间的相互作用
 */
 class Interaction {
   public:
@@ -38,11 +38,17 @@ class Interaction {
     PBRT_CPU_GPU
     Point3f p() const { return Point3f(pi); }
 
+    /*
+        查某个Interaction的指针或引用是否是两个子类之一, 根据法线是否为0判断
+    */
     PBRT_CPU_GPU
     bool IsSurfaceInteraction() const { return n != Normal3f(0, 0, 0); }
     PBRT_CPU_GPU
     bool IsMediumInteraction() const { return !IsSurfaceInteraction(); }
 
+    /*
+        检查父类转换为子类是否可行
+    */
     PBRT_CPU_GPU
     const SurfaceInteraction &AsSurface() const {
         CHECK(IsSurfaceInteraction());
@@ -131,12 +137,22 @@ class Interaction {
     }
 
     // Interaction Public Members
+    // pi是一个域， 表示交点处的附近的区域，用于避免光线在离开表面时不正确的自相交问题
     Point3fi pi;
+    // 于设置离开交互点时生成的光线的时间点
     Float time = 0;
+    // 出射光反向向量，为什么是反向的？因为光是从相机射出，不是从光源射出
     Vector3f wo;
+    // 交互点对应的法线和uv，不放在SurfaceInteraction是为了方便调用
     Normal3f n;
     Point2f uv;
+    /*
+        当Interaction用作表示两种介质之间的相互作用时使用
+    */
     const MediumInterface *mediumInterface = nullptr;
+    /*
+        当Interaction用作表示在某种散射介质中的点的属性时使用
+    */
     Medium medium = nullptr;
 };
 
@@ -255,8 +271,11 @@ class SurfaceInteraction : public Interaction {
     SampledSpectrum Le(Vector3f w, const SampledWavelengths &lambda) const;
 
     // SurfaceInteraction Public Members
+    // 点p在uv方向的偏导数
     Vector3f dpdu, dpdv;
+    // 法线的uv偏导数
     Normal3f dndu, dndv;
+    // 用于支持凹凸贴图或网格的每个顶点插值的法线，把原始坐标和法线处理以后的值，着色用
     struct {
         Normal3f n;
         Vector3f dpdu, dpdv;
