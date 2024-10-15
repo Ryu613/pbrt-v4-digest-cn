@@ -16,9 +16,16 @@
 
 namespace pbrt {
 
+// 表明这其中的函数只在这个头文件中能被使用，其他引用者不能使用
 namespace detail {
 
 // TaggedPointer Helper Templates
+/*
+    实现了多态性
+    各种Dispatch方法为了满足只在CPU,只在GPU，同时在CPU/GPU上进行函数调用的分派
+    动态分派只会有一次函数调用，比之前的二叉查找法的调用栈更清晰，利于调试
+    (但是性能上是一样的)
+*/
 template <typename F, typename R, typename T>
 PBRT_CPU_GPU R Dispatch(F &&func, const void *ptr, int index) {
     DCHECK_EQ(0, index);
@@ -740,6 +747,9 @@ template <typename... Ts>
 class TaggedPointer {
   public:
     // TaggedPointer Public Types
+    /*
+        包含了此TaggedPoiinter所有可能的一个或多个对象类型
+    */
     using Types = TypePack<Ts...>;
 
     // TaggedPointer Public Methods
@@ -748,7 +758,9 @@ class TaggedPointer {
     PBRT_CPU_GPU TaggedPointer(T *ptr) {
         uint64_t iptr = reinterpret_cast<uint64_t>(ptr);
         DCHECK_EQ(iptr & ptrMask, iptr);
+        // 为这个类型获取一个整形索引
         constexpr unsigned int type = TypeIndex<T>();
+        // 原始指针带上了类型的索引，上移至指针指未使用的比特上
         bits = iptr | ((uint64_t)type << tagShift);
     }
 
@@ -763,6 +775,9 @@ class TaggedPointer {
         return *this;
     }
 
+    /*
+        0的索引代表空指针，其余的索引就依次加1求得
+    */
     template <typename T>
     PBRT_CPU_GPU static constexpr unsigned int TypeIndex() {
         using Tp = typename std::remove_cv_t<T>;
@@ -772,14 +787,17 @@ class TaggedPointer {
             return 1 + pbrt::IndexOf<Tp, Types>::count;
     }
 
+    // 从TaggedPointer中相关的比特中解出标签并返回
     PBRT_CPU_GPU
     unsigned int Tag() const { return ((bits & tagMask) >> tagShift); }
 
+    // 用于在运行期检查某个TaggedPointer是否代表了某种特定类型
     template <typename T>
     PBRT_CPU_GPU bool Is() const {
         return Tag() == TypeIndex<T>();
     }
 
+    // 标签的最大值就等于代表的类型的数量
     PBRT_CPU_GPU
     static constexpr unsigned int MaxTag() { return sizeof...(Ts); }
     PBRT_CPU_GPU
@@ -803,6 +821,7 @@ class TaggedPointer {
         return reinterpret_cast<const T *>(ptr());
     }
 
+    // 返回特定类型的指针，若不存在此类型，返回nullptr
     template <typename T>
     PBRT_CPU_GPU T *CastOrNullptr() {
         if (Is<T>())
@@ -866,8 +885,14 @@ class TaggedPointer {
     static_assert(sizeof(uintptr_t) <= sizeof(uint64_t),
                   "Expected pointer size to be <= 64 bits");
     // TaggedPointer Private Members
+    /*
+        现代CPU用57位比特来定位内存地址，远超实际内存大小
+        TaggedPointer因此就用了其中高位的比特数来编码对象的类型。
+        对于57位的内存空间，也还有7比特剩余，完全足够使用
+    */
     static constexpr int tagShift = 57;
     static constexpr int tagBits = 64 - tagShift;
+    // tagMask是一个位掩码，用于把类型的标签的比特解出来，ptrMask用于解出原始的指针
     static constexpr uint64_t tagMask = ((1ull << tagBits) - 1) << tagShift;
     static constexpr uint64_t ptrMask = ~tagMask;
     uint64_t bits = 0;
