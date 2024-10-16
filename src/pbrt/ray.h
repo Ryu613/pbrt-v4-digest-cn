@@ -39,6 +39,9 @@ class Ray {
 };
 
 // RayDifferential Definition
+/*
+    为了纹理抗锯齿，这里给出了射线的微分量，和两条在x,y方向上偏移后的辅助射线
+*/
 class RayDifferential : public Ray {
   public:
     // RayDifferential Public Methods
@@ -50,6 +53,9 @@ class RayDifferential : public Ray {
     PBRT_CPU_GPU
     explicit RayDifferential(const Ray &ray) : Ray(ray) {}
 
+    /*
+        根据样本之间估计出来的间距，来缩放微分量大小, 避免纹理模糊问题
+    */ 
     void ScaleDifferentials(Float s) {
         rxOrigin = o + (rxOrigin - o) * s;
         ryOrigin = o + (ryOrigin - o) * s;
@@ -66,7 +72,9 @@ class RayDifferential : public Ray {
     std::string ToString() const;
 
     // RayDifferential Public Members
+    // 取此对象前先用此变量看是否可用
     bool hasDifferentials = false;
+    // 两条x,y辅助射线的原点和向量
     Point3f rxOrigin, ryOrigin;
     Vector3f rxDirection, ryDirection;
 };
