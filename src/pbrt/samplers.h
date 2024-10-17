@@ -796,6 +796,9 @@ PBRT_CPU_GPU inline Point2f Sampler::GetPixel2D() {
 }
 
 // Sampler Inline Functions
+/*
+    给出相机的采样点需要的信息
+*/
 template <typename S>
 inline PBRT_CPU_GPU CameraSample GetCameraSample(S sampler, Point2i pPixel,
                                                  Filter filter) {

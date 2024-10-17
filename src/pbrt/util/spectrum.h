@@ -364,7 +364,7 @@ class SampledWavelengths {
 
 // Spectrum Definitions
 /*
-    最简单的光谱实现：代表了所有波长下光谱分布的常数值
+    最简单的光谱实现：代表了所有波长下光谱分布皆为常数值
     一般用于表示没有散射效果(c=0)
 */
 class ConstantSpectrum {
