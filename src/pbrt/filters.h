@@ -18,6 +18,10 @@
 namespace pbrt {
 
 // FilterSample Definition
+/*
+    采样后的点p和其权重
+    权重值是滤波函数在点p的值除以所使用的采样方法的PDF的值
+*/
 struct FilterSample {
     Point2f p;
     Float weight;

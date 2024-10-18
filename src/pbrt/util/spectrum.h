@@ -31,8 +31,10 @@
 namespace pbrt {
 
 // Spectrum Constants
+// 可见光波长范围
 constexpr Float Lambda_min = 360, Lambda_max = 830;
 
+// 采样波长样本的数量
 static constexpr int NSpectrumSamples = 4;
 
 static constexpr Float CIE_Y_integral = 106.856895;
@@ -55,9 +57,11 @@ class Spectrum : public TaggedPointer<ConstantSpectrum, DenselySampledSpectrum,
     using TaggedPointer::TaggedPointer;
     std::string ToString() const;
 
+    // 根据波长给出对应光谱分布
     PBRT_CPU_GPU
     Float operator()(Float lambda) const;
-
+    
+    // 用于给出波长范围内光谱分布的最大边界值
     PBRT_CPU_GPU
     Float MaxValue() const;
 
@@ -88,6 +92,11 @@ Float SpectrumToPhotometric(Spectrum s);
 XYZ SpectrumToXYZ(Spectrum s);
 
 // SampledSpectrum Definition
+/*
+    采样后的光谱分布
+    根据NSpectrumSamples的数量，给出每个光谱分布的采样结果值
+    可以对这些采样后的光谱分布值做数学计算(其实就是为对象里的每个样本一一进行加减乘除)
+*/
 class SampledSpectrum {
   public:
     // SampledSpectrum Public Methods
@@ -267,9 +276,9 @@ class SampledSpectrum {
 
 // SampledWavelengths Definitions
 /*
-    这个类存储了某个有样本的SampledSpectrum对象的波长。
-    这样做不仅能跟踪某个独立的SampledSpectrum的SampledWavelengths，
-    而且也不会在具有多个波段样本的SampledSpectrums的时候有任何组合操作
+    SampledSpectrum存采样的光谱分布值，此类存采样的波长和pdf
+    这样做一是可以让每个独立的SampledSpectrum对应一个SampledWavelengths,
+    二是防止不同采样波长的SampledSpectrums错误地合并起来了
 */
 class SampledWavelengths {
   public:
@@ -354,6 +363,10 @@ class SampledWavelengths {
 };
 
 // Spectrum Definitions
+/*
+    最简单的光谱实现：代表了所有波长下光谱分布皆为常数值
+    一般用于表示没有散射效果(c=0)
+*/
 class ConstantSpectrum {
   public:
     PBRT_CPU_GPU
@@ -373,6 +386,9 @@ class ConstantSpectrum {
     Float c;
 };
 
+/*
+    在给定波长范围内，以间隔1nm来采样的光谱分布
+*/
 class DenselySampledSpectrum {
   public:
     // DenselySampledSpectrum Public Methods
@@ -775,6 +791,11 @@ PBRT_CPU_GPU inline Float InnerProduct(Spectrum f, Spectrum g) {
 }
 
 // Spectrum Inline Method Definitions
+/*
+    TaggedPointer的多态性实现
+    根据波长调用TaggedPointer具体类型的operator()方法
+    其他Dispatch同理
+*/
 PBRT_CPU_GPU inline Float Spectrum::operator()(Float lambda) const {
     auto op = [&](auto ptr) { return (*ptr)(lambda); };
     return Dispatch(op);
