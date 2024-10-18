@@ -45,6 +45,7 @@ inline BxDFReflTransFlags &operator|=(BxDFReflTransFlags &a, BxDFReflTransFlags 
 std::string ToString(BxDFReflTransFlags flags);
 
 // BxDFFlags Definition
+// BxDF的各种反射类型，包括各种复合类型
 enum BxDFFlags {
     Unset = 0,
     Reflection = 1 << 0,
@@ -169,23 +170,38 @@ class BxDF
                            HairBxDF, MeasuredBxDF, ConductorBxDF, NormalizedFresnelBxDF> {
   public:
     // BxDF Interface
+    // 用来查找材质的类型
     PBRT_CPU_GPU inline BxDFFlags Flags() const;
 
     using TaggedPointer::TaggedPointer;
 
     std::string ToString() const;
 
+    /*
+        根据入射和出射方向，给出BxDF的分布函数值
+        这个接口隐式地假设了光在不同波长下是独立的，在一个波长下的能量不会再另外一个波长下反映出来
+    */ 
     PBRT_CPU_GPU inline SampledSpectrum f(Vector3f wo, Vector3f wi,
                                           TransportMode mode) const;
 
+    /*
+        利用重要性采样来从某个与散射函数图像近似的分布中找到一个方向
+        确定在给定出射光方向,并且为这组方向返回BxDF的值
+    */
     PBRT_CPU_GPU inline pstd::optional<BSDFSample> Sample_f(
         Vector3f wo, Float uc, Point2f u, TransportMode mode = TransportMode::Radiance,
         BxDFReflTransFlags sampleFlags = BxDFReflTransFlags::All) const;
 
+    /*
+        根据给定的一对方向返回PDF的值
+    */
     PBRT_CPU_GPU inline Float PDF(
         Vector3f wo, Vector3f wi, TransportMode mode,
         BxDFReflTransFlags sampleFlags = BxDFReflTransFlags::All) const;
 
+    /*
+        取反射率
+    */
     PBRT_CPU_GPU
     SampledSpectrum rho(Vector3f wo, pstd::span<const Float> uc,
                         pstd::span<const Point2f> u2) const;
