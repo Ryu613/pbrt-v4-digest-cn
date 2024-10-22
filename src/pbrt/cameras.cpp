@@ -140,19 +140,27 @@ CameraBase::CameraBase(CameraBaseParameters p)
 PBRT_CPU_GPU pstd::optional<CameraRayDifferential> CameraBase::GenerateRayDifferential(
     Camera camera, CameraSample sample, SampledWavelengths &lambda) {
     // Generate regular camera ray _cr_ for ray differential
+    // 生成一条普通的射线
     pstd::optional<CameraRay> cr = camera.GenerateRay(sample, lambda);
     if (!cr)
         return {};
     RayDifferential rd(cr->ray);
 
     // Find camera ray after shifting one pixel in the $x$ direction
+    /*
+        eps一个往前一个往后，用于真实相机模型在相机边缘的暗角效果
+        因为有时候主光线可用，但是移动了一个距离就超过了镜头成像的区域，
+        这时候就要尝试往另一个方向移动
+    */
     pstd::optional<CameraRay> rx;
     for (Float eps : {.05f, -.05f}) {
         CameraSample sshift = sample;
         sshift.pFilm.x += eps;
         // Try to generate ray with _sshift_ and compute $x$ differential
         if (rx = camera.GenerateRay(sshift, lambda); rx) {
+            // 把原点距离的差除以偏移量求得微分原点rxOrigin的位置
             rd.rxOrigin = rd.o + (rx->ray.o - rd.o) / eps;
+            // 同理求得微分向量
             rd.rxDirection = rd.d + (rx->ray.d - rd.d) / eps;
             break;
         }
@@ -171,6 +179,7 @@ PBRT_CPU_GPU pstd::optional<CameraRayDifferential> CameraBase::GenerateRayDiffer
     }
 
     // Return approximate ray differential and weight
+    // x,y方向的微分量都有，则把标识设为true
     rd.hasDifferentials = rx && ry;
     return CameraRayDifferential{rd, cr->weight};
 }
@@ -431,6 +440,7 @@ PBRT_CPU_GPU pstd::optional<CameraRay> PerspectiveCamera::GenerateRay(
     Point3f pFilm = Point3f(sample.pFilm.x, sample.pFilm.y, 0);
     Point3f pCamera = cameraFromRaster(pFilm);
 
+    // 用pCamera作为光线的方向
     Ray ray(Point3f(0, 0, 0), Normalize(Vector3f(pCamera)), SampleTime(sample.time),
             medium);
     // Modify ray for depth of field

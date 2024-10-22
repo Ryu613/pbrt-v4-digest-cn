@@ -293,13 +293,13 @@ class ProjectiveCamera : public CameraBase {
     std::string BaseToString() const;
 
     /*
-        除了CameraBase类需要的参数外，ProjectiveCamera也需拿到投影变换矩阵参数，
-        屏幕空间的范围就是图像的范围，还有焦距参数和透镜光圈大小的参数。
+        除了CameraBase类需要的参数外，ProjectiveCamera也需拿到
+        投影变换矩阵、图像在屏幕空间的范围、焦距、和透镜光圈大小的参数
         如果光圈不是一个无穷小的孔，那么图像中的一部分可能会模糊(在真实的透镜系统中，
         聚焦范围外的物体会模糊)
 
-        ProjectiveCamera的继承类会把投影变换传到基类的构造器中，提供了相机到屏幕
-        空间的投影转换。因此，构造器能更方便的从光栅空间转换到相机空间
+        ProjectiveCamera的实现类还会给出从相机到屏幕空间的投影矩阵，并传到此处这个基类中
+        初始化各种空间变换Transform对象
     */
     ProjectiveCamera(CameraBaseParameters baseParameters,
                      const Transform &screenFromCamera, Bounds2f screenWindow,
@@ -404,6 +404,10 @@ class PerspectiveCamera : public ProjectiveCamera {
             cameraFromRaster(Point3f(0, 1, 0)) - cameraFromRaster(Point3f(0, 0, 0));
 
         // Compute _cosTotalWidth_ for perspective camera
+        /*
+            这个余弦值点乘观察向量，再与这个余弦值比较，
+            可以用于快速剔除不在视锥体范围内的物体
+        */ 
         Point2f radius = Point2f(film.GetFilter().Radius());
         Point3f pCorner(-radius.x, -radius.y, 0.f);
         Vector3f wCornerCamera = Normalize(Vector3f(cameraFromRaster(pCorner)));

@@ -116,6 +116,11 @@ PBRT_CPU_GPU Transform Orthographic(Float zNear, Float zFar) {
     return Scale(1, 1, 1 / (zFar - zNear)) * Translate(Vector3f(0, 0, -zNear));
 }
 
+/*
+    步骤:
+    1. 相机空间中的点p投影到观察平面上
+    2. 根据fov缩放(x,y)，确保视场内的点投影到视平面上的坐标在[-1,1]的范围内
+*/
 PBRT_CPU_GPU Transform Perspective(Float fov, Float n, Float f) {
     // Perform projective divide for perspective projection
     // clang-format off
