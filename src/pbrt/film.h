@@ -177,7 +177,7 @@ struct FilmBaseParameters {
                        const PixelSensor *sensor, const FileLoc *loc);
     /*
         图像的整体分辨率fullResolution
-        整个图像的边界框pixelBounds
+        整个图像的像素边界框pixelBounds
         滤波器filter
         像素感光器sensor
         胶片的对角线长度diagonal
