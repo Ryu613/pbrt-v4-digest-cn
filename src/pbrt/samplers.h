@@ -439,9 +439,16 @@ class PMJ02BNSampler {
 };
 
 // IndependentSampler Definition
+/*
+    最简单，且效果在大多数情况下也比较差的采样器，它为每个样本返回独立均匀的样本值，
+    不考虑样本的分布质量
+*/
 class IndependentSampler {
   public:
     // IndependentSampler Public Methods
+    /*
+      传入种子用来初始化伪随机数生成器，用于生成采样值
+    */
     IndependentSampler(int samplesPerPixel, int seed = 0)
         : samplesPerPixel(samplesPerPixel), seed(seed) {}
 
@@ -453,9 +460,6 @@ class IndependentSampler {
     PBRT_CPU_GPU
     int SamplesPerPixel() const { return samplesPerPixel; }
 
-    /*
-        用p点坐标和种子数做哈希，作为伪随机数的序列，然后为序列加入初始偏移
-    */
     PBRT_CPU_GPU
     void StartPixelSample(Point2i p, int sampleIndex, int dimension) {
         rng.SetSequence(Hash(p, seed));

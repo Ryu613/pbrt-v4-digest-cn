@@ -43,6 +43,11 @@ class MLTSampler;
 class DebugMLTSampler;
 
 // Sampler Definition
+/*
+    采样器的任务是生成均匀的d-维的样本点，每个点的坐标值都在[0,1)间。
+    点的维度总数没有提前设定，采样器必须根据光传输算法执行时的计算要求，生成额外的维度
+    使用样本值的代码必须谨慎编写，保证样本每个维度都被使用，且顺序一致
+*/
 class Sampler
     : public TaggedPointer<  // Sampler Types
           PMJ02BNSampler, IndependentSampler, StratifiedSampler, HaltonSampler,
@@ -56,37 +61,34 @@ class Sampler
     static Sampler Create(const std::string &name, const ParameterDictionary &parameters,
                           Point2i fullResolution, const FileLoc *loc, Allocator alloc);
 
-    // 每个像素点要取几个采样
+    // 每个像素点要取的样本数
     PBRT_CPU_GPU inline int SamplesPerPixel() const;
 
     /*
-        当某个积分器已经准备用给出的像素样本运行时，会从StartPixelSample()开始，
-        这个函数提供了图像中像素点的坐标和像素点的样本的索引(索引值大于等于0，
-        且小于SamplePerPixel()的值)。积分器可能也会提供一个起始维度，指定采样生成
-        应该从哪个维度开始
+        积分器开始采样时调用，最后一个参数用于指定从哪个维度开始生成
+        调用原因有二:
+        1. 有些采样器会利用之前的采样来调整后续采样，以便优化采样的整体分布情况
+        2. 使采样状态可确定，这样的话每次生成的采样都是与前次一致的，方便调试
     */
     PBRT_CPU_GPU inline void StartPixelSample(Point2i p, int sampleIndex,
                                               int dimension = 0);
     /*
-        积分器可以通过Get1D()和Get2D()同时请求d维的一个或多个样本点的维度值。
-        虽然一个二维的样本值可以通过调用2次Get1D()获取，但是一些采样器在知道有
-        2个维度值要生成的时候，能返回更好的样本值。然而，接口不支持直接返回3维
-        或更高维度的样本值，因为一般来说，渲染算法的实现不需要。若有这种场景，
-        可以通过调用低维度的样本值生成方法来构建高维度的样本点。
+        积分器可以通过Get1D()和Get2D()一次性请求d维样本点的1个或2个维度。
+        虽然二维的样本值可以通过调用2次Get1D()获取，
+        但是一些采样器如果知道有2个维度值会被一起使用时，能生成更好的样本值
     */
     PBRT_CPU_GPU inline Float Get1D();
     PBRT_CPU_GPU inline Point2f Get2D();
 
     /*
-        GetPixel2D()被用来获取二维的样本，用来确定被采样的点对应胶片平面上的
-        哪个点。某些采样器的实现，在处理样本的胶片采样点的维度值的方式和处理在
-        其他维度下的二维样本值的方式不同
+        拿到一个二维样本，用来确定在胶片平面上被采样的点
+        有些采样器是自己实现，另一些是直接调用Get2D()实现的
     */
     PBRT_CPU_GPU inline Point2f GetPixel2D();
 
     /*
-        如果是多线程，单个Sampler被并行访问是不安全的。因此，积分器调用Clone()
-        来获取初始Sampler的拷贝，这样每个线程有自己的一份
+        单个Sampler被多线程并行访问是不安全的
+        积分器调用Clone()为每个线程获取一份初始Sampler的拷贝
     */
     Sampler Clone(Allocator alloc = {});
 

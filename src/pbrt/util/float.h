@@ -42,8 +42,7 @@ static constexpr Float Infinity = std::numeric_limits<Float>::infinity();
 
 static constexpr Float MachineEpsilon = std::numeric_limits<Float>::epsilon() * 0.5;
 /*
-    因为每个样本的坐标值都是严格小于1的，那么定义一个常数是很有用的，
-    即OneMinusEpsilon,这个常数代表了最大的可表示的，小于1的浮点数。
+    代表了小于1的最大可表示的浮点数，某些采样器会把样本值夹拢在此范围内
 */
 static constexpr double DoubleOneMinusEpsilon = 0x1.fffffffffffffp-1;
 static constexpr float FloatOneMinusEpsilon = 0x1.fffffep-1;
