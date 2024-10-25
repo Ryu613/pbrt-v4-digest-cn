@@ -809,6 +809,11 @@ inline PBRT_CPU_GPU CameraSample GetCameraSample(S sampler, Point2i pPixel,
     FilterSample fs = filter.Sample(sampler.GetPixel2D());
     CameraSample cs;
     // Initialize _CameraSample_ member variables
+    /*
+        pPixel:图像的第x+1行第y+1列的像素点，假设像素之间间隔为1
+        fs.p: 在滤波器半径里面的偏移量
+        Vector2f(0.5f,0.5f): pPixel位置在左上角，像素中心在(x+0.5,y+0.5)的位置
+    */
     cs.pFilm = pPixel + fs.p + Vector2f(0.5f, 0.5f);
     cs.time = sampler.Get1D();
     cs.pLens = sampler.Get2D();

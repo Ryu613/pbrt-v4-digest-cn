@@ -189,6 +189,7 @@ class RandomWalkIntegrator : public RayIntegrator {
         // << 找到表面交点发出的光 >>
         // 若有交点被找到，交点处需要根据光传播的公式做计算
         // 渲染公式里第一个量Le(p,wo)，是代表照出来的光的辐射量，通过调用SurfaceInteraction::Le()获取
+        // 相机光线方向的反方向(照向相机的方向)
         Vector3f wo = -ray.d;
         // 这里用来获取光线方向上发出的光的辐射量，若物体不是发光体，这部分就返回光谱分布为0的量
         SampledSpectrum Le = isect.Le(wo, lambda);

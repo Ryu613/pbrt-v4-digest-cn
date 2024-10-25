@@ -34,7 +34,7 @@ namespace pbrt {
 // 可见光波长范围
 constexpr Float Lambda_min = 360, Lambda_max = 830;
 
-// 采样波长样本的数量
+// 要采样几个波长
 static constexpr int NSpectrumSamples = 4;
 
 static constexpr Float CIE_Y_integral = 106.856895;
@@ -48,6 +48,9 @@ class RGBAlbedoSpectrum;
 class RGBUnboundedSpectrum;
 class RGBIlluminantSpectrum;
 
+/*
+    光谱：描述光在不同波长下的反射率情况
+*/
 class Spectrum : public TaggedPointer<ConstantSpectrum, DenselySampledSpectrum,
                                       PiecewiseLinearSpectrum, RGBAlbedoSpectrum,
                                       RGBUnboundedSpectrum, RGBIlluminantSpectrum,
@@ -57,7 +60,7 @@ class Spectrum : public TaggedPointer<ConstantSpectrum, DenselySampledSpectrum,
     using TaggedPointer::TaggedPointer;
     std::string ToString() const;
 
-    // 根据波长给出对应光谱分布
+    // 根据波长给出对应光谱分布(反射率)
     PBRT_CPU_GPU
     Float operator()(Float lambda) const;
     
@@ -65,6 +68,7 @@ class Spectrum : public TaggedPointer<ConstantSpectrum, DenselySampledSpectrum,
     PBRT_CPU_GPU
     Float MaxValue() const;
 
+    // 根据采样的波长，给出这些波长的对应光谱分布值
     PBRT_CPU_GPU
     SampledSpectrum Sample(const SampledWavelengths &lambda) const;
 };
@@ -364,8 +368,8 @@ class SampledWavelengths {
 
 // Spectrum Definitions
 /*
-    最简单的光谱实现：代表了所有波长下光谱分布皆为常数值
-    一般用于表示没有散射效果(c=0)
+    在所有波长下，光谱分布都是一个常数
+    一般用于表示某种特定形式的散射效果不存在(c=0)
 */
 class ConstantSpectrum {
   public:
@@ -387,6 +391,7 @@ class ConstantSpectrum {
 };
 
 /*
+    密集采样的光谱分布
     在给定波长范围内，以间隔1nm来采样的光谱分布
 */
 class DenselySampledSpectrum {

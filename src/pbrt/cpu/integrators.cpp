@@ -260,27 +260,18 @@ void ImageTileIntegrator::Render() {
 void RayIntegrator::EvaluatePixelSample(Point2i pPixel, int sampleIndex, Sampler sampler,
                                         ScratchBuffer &scratchBuffer) {
     // Sample wavelengths for the ray
-    // <<为光线采样其光波波长>>
-    // 每一束光都带有离散的多个波长的辐射量(默认4个波长)
-    // 当为每个像素计算颜色值时，pbrt
-    // 在不同的像素采样中选择不同的波长，这样最终结果可以更好地反映所有波长的正确结果
-    // 为了选取这些波长，lu这个样本值会被Sampler提供，lu会在[0,1)之间
+    // <<为光线采样波长>>
+    // 取lu作为采样因子，后续让胶片给出要采样的一组波长
     Float lu = sampler.Get1D();
     if (Options->disableWavelengthJitter)
         lu = 0.5;
-    // SampleWavelengths()会把lu映射到特定的一组波长(根据胶片传感器响应与波长关系的模型)
-    // 大部分Sampler实现保证了，若一个像素点有多个采样点，这些采样点在[0,1)之间分布均匀
-    // 反过来说，为了保证图片质量，也需要光的波长在[0,1)之间较均匀的分布(避免色彩不准)
+    // 采样哪几个波长，是根据胶片支持的波长范围来定
     SampledWavelengths lambda = camera.GetFilm().SampleWavelengths(lu);
 
     // Initialize _CameraSample_ for current sample
     // <<为当前采样初始化CameraSample>>
-    // CameraSample用来记录胶片上的位置，与相机生成的光线位置对应
-    // 相机生成光线的位置的选取，取决于采样点的位置和像素点对应的重建滤波器
-    // GetCameraSample就是用来完成以上操作的
-    // CameraSample同时记录了光线相关的时间，和镜头位置采样值，
-    // 用于渲染包含运动物体的场景和模拟非针孔光圈的相机模型
     Filter filter = camera.GetFilm().GetFilter();
+    // 取出采样点数据,封装在CameraSample中
     CameraSample cameraSample = GetCameraSample(sampler, pPixel, filter);
 
     // Generate camera ray for current sample
