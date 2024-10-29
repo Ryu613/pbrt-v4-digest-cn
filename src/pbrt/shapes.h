@@ -92,7 +92,7 @@ PBRT_CPU_GPU inline Ray ShapeSampleContext::SpawnRay(Vector3f w) const {
 // ShapeIntersection Definition
 struct ShapeIntersection {
     SurfaceInteraction intr;
-    // 光到交点的t,表示沿着光线方向到交点的距离
+    // 鍏夊埌浜ょ偣鐨則,琛ㄧず娌跨潃鍏夌嚎鏂瑰悜鍒颁氦鐐圭殑璺濈
     Float tHit;
     std::string ToString() const;
 };
@@ -105,9 +105,6 @@ struct QuadricIntersection {
 };
 
 // Sphere Definition
-/*
-    定义了物体形状的几何特征
-*/
 class Sphere {
   public:
     // Sphere Public Methods
@@ -131,21 +128,12 @@ class Sphere {
           thetaZMax(std::acos(Clamp(std::max(zMin, zMax) / radius, -1, 1))),
           phiMax(Radians(Clamp(phiMax, 0, 360))) {}
 
-    /*
-        Shape的实现类必须有能力用轴对称的包围盒(表示为Bounds3f)来包围自己
-    */
     PBRT_CPU_GPU
     Bounds3f Bounds() const;
 
-    /*
-        Shape的实现类也必须能够包围物体表面法线的范围
-    */
     PBRT_CPU_GPU
     DirectionCone NormalBounds() const { return DirectionCone::EntireSphere(); }
 
-    /*
-        用于测试光线与其相交,若相交，会返回第一次光线与形状相交的几何信息
-    */
     PBRT_CPU_GPU
     pstd::optional<ShapeIntersection> Intersect(const Ray &ray,
                                                 Float tMax = Infinity) const {
@@ -241,12 +229,6 @@ class Sphere {
         return QuadricIntersection{Float(tShapeHit), pHit, phi};
     }
 
-    /*
-        相交测试方法，比Intersect()开销小，经常用于阴影光线计算中，用来测试场景中从某点是否能看到光源
-        若此方法返回true，相交的范围参数就用以参数hitt0和hitt1返回。在(0,tMax)之外的相交会被忽略。
-        若光线原点在盒子中，会在hitt0返回0。
-
-    */
     PBRT_CPU_GPU
     bool IntersectP(const Ray &r, Float tMax = Infinity) const {
         return BasicIntersect(r, tMax).has_value();
@@ -299,30 +281,15 @@ class Sphere {
                                                       dndu, dndv, time, flipNormal));
     }
 
-    /*
-        当Shape是面积光源时，用渲染空间坐标来返回它们的面积
-    */
     PBRT_CPU_GPU
     Float Area() const { return phiMax * radius * (zMax - zMin); }
 
-
-    /*
-        根据采样点返回对应Shape表面的点，把形状某点作为发光点时会用到
-    */
     PBRT_CPU_GPU
     pstd::optional<ShapeSample> Sample(Point2f u) const;
 
-    /*
-        当使用多重重要性采样时,会使用其他采样方式来生成样本,会用到此方法
-    */
     PBRT_CPU_GPU
     Float PDF(const Interaction &) const { return 1 / Area(); }
 
-    /*
-        利用概率密度来生成一个关于参考点立体角的点，计算面积光采样时会用到，因为
-        面积光采样的计算，会把直接光照的积分看作一个从参考点方向上的积分，用这个
-        点的立体角来表达这些采样密度会更方便
-    */
     PBRT_CPU_GPU
     pstd::optional<ShapeSample> Sample(const ShapeSampleContext &ctx, Point2f u) const {
         // Sample uniformly on sphere if $\pt{}$ is inside it
