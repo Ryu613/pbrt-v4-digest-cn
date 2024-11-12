@@ -806,6 +806,7 @@ PBRT_CPU_GPU inline Point2f Sampler::GetPixel2D() {
 template <typename S>
 inline PBRT_CPU_GPU CameraSample GetCameraSample(S sampler, Point2i pPixel,
                                                  Filter filter) {
+    // 滤波器半径内的偏移量
     FilterSample fs = filter.Sample(sampler.GetPixel2D());
     CameraSample cs;
     // Initialize _CameraSample_ member variables

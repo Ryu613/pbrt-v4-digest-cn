@@ -463,6 +463,7 @@ PBRT_CPU_GPU pstd::optional<CameraRay> PerspectiveCamera::GenerateRay(
 PBRT_CPU_GPU pstd::optional<CameraRayDifferential> PerspectiveCamera::GenerateRayDifferential(
     CameraSample sample, SampledWavelengths &lambda) const {
     // Compute raster and camera sample positions
+    // 把胶片平面上要采样的点转换为相机空间里面的点
     Point3f pFilm = Point3f(sample.pFilm.x, sample.pFilm.y, 0);
     Point3f pCamera = cameraFromRaster(pFilm);
     Vector3f dir = Normalize(Vector3f(pCamera.x, pCamera.y, pCamera.z));

@@ -266,6 +266,7 @@ void RayIntegrator::EvaluatePixelSample(Point2i pPixel, int sampleIndex, Sampler
     if (Options->disableWavelengthJitter)
         lu = 0.5;
     // 采样哪几个波长，是根据胶片支持的波长范围来定
+    // 默认情况下就是根据采样器给定的数，在可见波段内取出第一个波长，然后均匀地取出剩余3个波长
     SampledWavelengths lambda = camera.GetFilm().SampleWavelengths(lu);
 
     // Initialize _CameraSample_ for current sample
