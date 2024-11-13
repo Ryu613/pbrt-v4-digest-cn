@@ -60,10 +60,7 @@ class Light : public TaggedPointer<  // Light Source Types
                             const MediumInterface &mediumInterface, const Shape shape,
                             FloatTexture alpha, const FileLoc *loc, Allocator alloc);
 
-    /*
-        所有光源必须能返回它们发出的光辐射通量Phi，也方便从PowerLightSampler采样到辐射通量的相对值
-        在对光照贡献最大的的地方投入更多采样能极大改善渲染效率
-    */
+    // 核心接口，返回光源发出的光辐射功率Phi
     SampledSpectrum Phi(SampledWavelengths lambda) const;
 
     /*
@@ -77,23 +74,28 @@ class Light : public TaggedPointer<  // Light Source Types
     */
     PBRT_CPU_GPU inline LightType Type() const;
 
+    // 核心接口:根据参考点返回这个点接收到的辐射量等一系列有用的参数
     PBRT_CPU_GPU inline pstd::optional<LightLiSample> SampleLi(
         LightSampleContext ctx, Point2f u, SampledWavelengths lambda,
         bool allowIncompletePDF = false) const;
 
+    // 在多重重要性采样时有用
     PBRT_CPU_GPU inline Float PDF_Li(LightSampleContext ctx, Vector3f wi,
                                      bool allowIncompletePDF = false) const;
 
     std::string ToString() const;
 
     // AreaLights only
+    // 面光源有用
     PBRT_CPU_GPU inline SampledSpectrum L(Point3f p, Normal3f n, Point2f uv, Vector3f w,
                                           const SampledWavelengths &lambda) const;
 
     // InfiniteLights only
+    // 无限远光源有用
     PBRT_CPU_GPU inline SampledSpectrum Le(const Ray &ray,
                                            const SampledWavelengths &lambda) const;
 
+    // 一些光源需要知道场景的空间边界时有用
     void Preprocess(const Bounds3f &sceneBounds);
 
     pstd::optional<LightBounds> Bounds() const;
