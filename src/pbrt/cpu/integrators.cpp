@@ -464,6 +464,9 @@ SampledSpectrum SimplePathIntegrator::Li(RayDifferential ray, SampledWavelengths
 
         // Account for infinite lights if ray has no intersection
         if (!si) {
+            // 若不对每个路径上的采样点估算光源照到其上的直接光照量，且这个点的上
+            // 一个点是镜面反射，要单独加上无限远面光源的量,若上一个点不是镜面
+            // 反射，那么调用SampleLi()的时候已经加上了
             if (!sampleLights || specularBounce)
                 for (const auto &light : infiniteLights)
                     L += beta * light.Le(ray, lambda);
@@ -472,6 +475,7 @@ SampledSpectrum SimplePathIntegrator::Li(RayDifferential ray, SampledWavelengths
 
         // Account for emissive surface if light was not sampled
         SurfaceInteraction &isect = si->intr;
+        // 如果不采样该点的直接光照，且上一个点是镜面反射，要求出交点的Le,加到总光量上
         if (!sampleLights || specularBounce)
             L += beta * isect.Le(-ray.d, lambda);
 
