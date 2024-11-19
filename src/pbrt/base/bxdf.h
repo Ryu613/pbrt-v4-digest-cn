@@ -45,7 +45,7 @@ inline BxDFReflTransFlags &operator|=(BxDFReflTransFlags &a, BxDFReflTransFlags 
 std::string ToString(BxDFReflTransFlags flags);
 
 // BxDFFlags Definition
-// BxDFµÄ¸÷ÖÖ·´ÉäÀàĞÍ£¬°üÀ¨¸÷ÖÖ¸´ºÏÀàĞÍ
+// BxDFçš„å„ç§åå°„ç±»å‹ï¼ŒåŒ…æ‹¬å„ç§å¤åˆç±»å‹ï¼Œç”¨ä½è¿ç®—å®ç°
 enum BxDFFlags {
     Unset = 0,
     Reflection = 1 << 0,
@@ -108,6 +108,9 @@ PBRT_CPU_GPU inline bool IsNonSpecular(BxDFFlags f) {
 std::string ToString(BxDFFlags flags);
 
 // TransportMode Definition
+/*
+    æ£€æµ‹å‡ºå°„æ–¹å‘æ˜¯é¢å¯¹ç›¸æœºè¿˜æ˜¯é¢å¯¹å…‰æº
+*/
 enum class TransportMode { Radiance, Importance };
 
 PBRT_CPU_GPU
@@ -164,13 +167,14 @@ class CoatedDiffuseBxDF;
 class CoatedConductorBxDF;
 
 // BxDF Definition
+// æ­¤ç±»æ˜¯å„ç§æ•£å°„ç±»å‹çš„æ€»æ¥å£ï¼Œæ•£å°„ç±»å‹æŒ‡å„ç§åå°„å’Œå„ç§é€å°„ç±»å‹ï¼ŒåŠå…¶ç»†åˆ†çš„å„ç§åå°„é€å°„ç±»å‹
 class BxDF
     : public TaggedPointer<DiffuseTransmissionBxDF, DiffuseBxDF, CoatedDiffuseBxDF,
                            CoatedConductorBxDF, DielectricBxDF, ThinDielectricBxDF,
                            HairBxDF, MeasuredBxDF, ConductorBxDF, NormalizedFresnelBxDF> {
   public:
     // BxDF Interface
-    // ÓÃÀ´²éÕÒ²ÄÖÊµÄÀàĞÍ
+    // ç”¨æ¥æŸ¥æ‰¾æè´¨çš„ç±»å‹
     PBRT_CPU_GPU inline BxDFFlags Flags() const;
 
     using TaggedPointer::TaggedPointer;
@@ -178,29 +182,32 @@ class BxDF
     std::string ToString() const;
 
     /*
-        ¸ù¾İÈëÉäºÍ³öÉä·½Ïò£¬¸ø³öBxDFµÄ·Ö²¼º¯ÊıÖµ
-        Õâ¸ö½Ó¿ÚÒşÊ½µØ¼ÙÉèÁË¹âÔÚ²»Í¬²¨³¤ÏÂÊÇ¶ÀÁ¢µÄ£¬ÔÚÒ»¸ö²¨³¤ÏÂµÄÄÜÁ¿²»»áÔÙÁíÍâÒ»¸ö²¨³¤ÏÂ·´Ó³³öÀ´
-    */ 
+        æ ¸å¿ƒæ¥å£
+        æ ¹æ®å…¥å°„å’Œå‡ºå°„æ–¹å‘ï¼Œç»™å‡ºBxDFçš„åˆ†å¸ƒå‡½æ•°å€¼
+        è¿™ä¸ªæ¥å£éšå¼åœ°å‡è®¾äº†å…‰åœ¨ä¸åŒæ³¢é•¿ä¸‹æ˜¯ç‹¬ç«‹çš„ï¼Œåœ¨ä¸€ä¸ªæ³¢é•¿ä¸‹çš„èƒ½é‡ä¸ä¼šå†å¦å¤–ä¸€ä¸ªæ³¢é•¿ä¸‹åæ˜ å‡ºæ¥
+    */
     PBRT_CPU_GPU inline SampledSpectrum f(Vector3f wo, Vector3f wi,
                                           TransportMode mode) const;
 
     /*
-        ÀûÓÃÖØÒªĞÔ²ÉÑùÀ´´ÓÄ³¸öÓëÉ¢Éäº¯ÊıÍ¼Ïñ½üËÆµÄ·Ö²¼ÖĞÕÒµ½Ò»¸ö·½Ïò
-        È·¶¨ÔÚ¸ø¶¨³öÉä¹â·½Ïò,²¢ÇÒÎªÕâ×é·½Ïò·µ»ØBxDFµÄÖµ
+        åˆ©ç”¨é‡è¦æ€§é‡‡æ ·æ¥ä»æŸä¸ªä¸æ•£å°„å‡½æ•°å›¾åƒè¿‘ä¼¼çš„åˆ†å¸ƒä¸­ï¼Œç»™å®šå‡ºå°„æ–¹å‘æ—¶ï¼Œæ‰¾åˆ°ä¸€ä¸ªå…¥å°„æ–¹å‘
+        è¿”å›è¿™ä¸ªå…¥å°„æ–¹å‘wiï¼Œå’ŒBxDFçš„å€¼ç­‰ç­‰ç›¸å…³é‡ï¼Œç”¨BSDFSampleå°è£…
+        åœ¨è·¯å¾„è¿½è¸ªä¸­ï¼Œæ ¹æ®BSDFçš„è´¡çŒ®å¤§å°æ¥é‡‡æ ·æ–¹å‘æœ‰ç”¨
+
     */
     PBRT_CPU_GPU inline pstd::optional<BSDFSample> Sample_f(
         Vector3f wo, Float uc, Point2f u, TransportMode mode = TransportMode::Radiance,
         BxDFReflTransFlags sampleFlags = BxDFReflTransFlags::All) const;
 
     /*
-        ¸ù¾İ¸ø¶¨µÄÒ»¶Ô·½Ïò·µ»ØPDFµÄÖµ
+        æ ¹æ®ç»™å®šçš„ä¸€å¯¹æ–¹å‘è¿”å›PDFçš„å€¼
     */
     PBRT_CPU_GPU inline Float PDF(
         Vector3f wo, Vector3f wi, TransportMode mode,
         BxDFReflTransFlags sampleFlags = BxDFReflTransFlags::All) const;
 
     /*
-        È¡·´ÉäÂÊ
+        è®¡ç®—åå°„ç‡ rho_hdå’Œrho_hh
     */
     PBRT_CPU_GPU
     SampledSpectrum rho(Vector3f wo, pstd::span<const Float> uc,

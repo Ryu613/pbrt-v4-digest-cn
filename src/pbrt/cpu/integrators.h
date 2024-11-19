@@ -242,6 +242,7 @@ class SimplePathIntegrator : public RayIntegrator {
     SimplePathIntegrator(int maxDepth, bool sampleLights, bool sampleBSDF, Camera camera,
                          Sampler sampler, Primitive aggregate, std::vector<Light> lights);
 
+    // 对光线估计辐射量
     SampledSpectrum Li(RayDifferential ray, SampledWavelengths &lambda, Sampler sampler,
                        ScratchBuffer &scratchBuffer,
                        VisibleSurface *visibleSurface) const;
@@ -255,6 +256,10 @@ class SimplePathIntegrator : public RayIntegrator {
   private:
     // SimplePathIntegrator Private Members
     int maxDepth;
+    // 是否使用光源的SampleLi()采样直接光照，此情况下，若上一个顶点不是镜面反射，会默认
+    // 包含无限远光源的量，否则，需要根据specularBounce判断决定是否加上无限远光量
+    // 是否使用BSDF的Sample_f()采样方向
+    // 默认为true
     bool sampleLights, sampleBSDF;
     UniformLightSampler lightSampler;
 };

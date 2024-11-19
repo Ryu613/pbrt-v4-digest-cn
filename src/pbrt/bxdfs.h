@@ -27,6 +27,7 @@
 namespace pbrt {
 
 // DiffuseBxDF Definition
+// 漫反射
 class DiffuseBxDF {
   public:
     // DiffuseBxDF Public Methods
@@ -36,8 +37,10 @@ class DiffuseBxDF {
 
     PBRT_CPU_GPU
     SampledSpectrum f(Vector3f wo, Vector3f wi, TransportMode mode) const {
+        // 出入射方向不在同一个半球上时，反射率为0
         if (!SameHemisphere(wo, wi))
             return SampledSpectrum(0.f);
+        // 用常数反射率代表的是半球上总的反射率，需要用1/pi标准化，故要乘上这个修正系数
         return R * InvPi;
     }
 
