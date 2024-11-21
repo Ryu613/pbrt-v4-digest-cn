@@ -494,10 +494,12 @@ SampledSpectrum SimplePathIntegrator::Li(RayDifferential ray, SampledWavelengths
         // Sample direct illumination if _sampleLights_ is true
         Vector3f wo = -ray.d;
         if (sampleLights) {
+            // 选出一个光源来进行采样
             pstd::optional<SampledLight> sampledLight =
                 lightSampler.Sample(sampler.Get1D());
             if (sampledLight) {
                 // Sample point on _sampledLight_ to estimate direct illumination
+                // 选出光源上的某点，用于获取光照量，方向，和概率密度
                 Point2f uLight = sampler.Get2D();
                 pstd::optional<LightLiSample> ls =
                     sampledLight->light.SampleLi(isect, uLight, lambda);

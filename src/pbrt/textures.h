@@ -283,6 +283,7 @@ class FloatConstantTexture {
 };
 
 // SpectrumConstantTexture Definition
+// 无论如何计算都返回相同的常数值
 class SpectrumConstantTexture {
   public:
     // SpectrumConstantTexture Public Methods

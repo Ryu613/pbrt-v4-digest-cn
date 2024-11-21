@@ -69,6 +69,7 @@ class GPUSpectrumPtexTexture;
 class SpectrumScaledTexture;
 
 // SpectrumTexture Definition
+// 针对光谱实现的纹理类
 class SpectrumTexture
     : public TaggedPointer<  // SpectrumTextures
           SpectrumImageTexture, GPUSpectrumImageTexture, SpectrumMixTexture,
