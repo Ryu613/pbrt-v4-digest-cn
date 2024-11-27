@@ -191,8 +191,9 @@ struct FilmBaseParameters {
           diagonal(diagonal),
           sensor(sensor),
           filename(filename) {}
-
+    //分辨率，如(1024,768)
     Point2i fullResolution;
+    // 胶片尺寸,如((0,0),(1024,768))
     Bounds2i pixelBounds;
     Filter filter;
     Float diagonal;

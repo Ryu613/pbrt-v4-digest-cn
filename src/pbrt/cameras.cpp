@@ -30,12 +30,9 @@ namespace pbrt {
 CameraTransform::CameraTransform(const AnimatedTransform &worldFromCamera) {
     switch (Options->renderingSpace) {
     case RenderingCoordinateSystem::Camera: {
-        // <<对于相机空间的渲染，计算worldFromRender>>
+        // <<基于相机空间渲染>>
 
         /*
-            对于相机空间的渲染，从相机到世界空间的转换过程会被worldFromRender使用
-            对于从相机空间到渲染空间的变换过程，用了恒等变换(identity transformation),
-            故这两个坐标系统是等价的。
             由于worldFromRender是不能被动画化，所以取了动画帧时间的中点(tMid)，然后
             把这个点在相机变换中的动画，并入renderFromCamera
         */
@@ -44,10 +41,9 @@ CameraTransform::CameraTransform(const AnimatedTransform &worldFromCamera) {
         break;
     }
     case RenderingCoordinateSystem::CameraWorld: {
-        // <<对于相机-世界空间的渲染，计算worldFromRender>>
+        // <<基于相机-世界空间渲染(默认)>>
         /*
-            对于相机-世界空间上的渲染(默认)，渲染空间到世界空间的坐标系变换时基于动画帧
-            的中点来转换到相机的位置
+            默认的渲染空间，worldFromRender基于动画帧的中点来转换到相机的位置
         */
         Float tMid = (worldFromCamera.startTime + worldFromCamera.endTime) / 2;
         Point3f pCamera = worldFromCamera(Point3f(0, 0, 0), tMid);
@@ -55,10 +51,7 @@ CameraTransform::CameraTransform(const AnimatedTransform &worldFromCamera) {
         break;
     }
     case RenderingCoordinateSystem::World: {
-        // <<对于世界空间的渲染，计算worldFromRender>>
-        /*
-            对于世界空间的渲染，就是做恒等变换
-        */
+        //  <<基于世界空间渲染>>
         worldFromRender = Transform();
         break;
     }
@@ -67,10 +60,6 @@ CameraTransform::CameraTransform(const AnimatedTransform &worldFromCamera) {
     }
     LOG_VERBOSE("World-space position: %s", worldFromRender(Point3f(0, 0, 0)));
     // <<计算renderFromCamera>>
-    /*
-        一旦worldFromRender设置完后，worldFromCamera剩余的变换过程会在这里处理，
-        存入到renderFromCamera
-    */
     Transform renderFromWorld = Inverse(worldFromRender);
     Transform rfc[2] = {renderFromWorld * worldFromCamera.startTransform,
                         renderFromWorld * worldFromCamera.endTransform};

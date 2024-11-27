@@ -211,11 +211,17 @@ class CameraBase {
 
   protected:
     // CameraBase Protected Members
+    // 相机的位置和朝向
     CameraTransform cameraTransform;
+    // 快门开关
     Float shutterOpen, shutterClose;
+    // 胶片
     Film film;
+    // 介质
     Medium medium;
+    // 相机x,y位置的最小差分量
     Vector3f minPosDifferentialX, minPosDifferentialY;
+    // 相机朝向的x,y最小差分量
     Vector3f minDirDifferentialX, minDirDifferentialY;
 
     // CameraBase Protected Methods
@@ -225,13 +231,8 @@ class CameraBase {
 
     /*
         通过多次调用camera的GenerateRay()函数来计算光线的微分量
-
-        camera的实现类必须实现此函数，但是那些方法之后还是会调用此函数
-        (注意，函数的签名不同于实现类中的那个)
-
-        相机的各种实现类会传入this指针(camera入参)，这会允许此函数调用对应camera的
-        GenerateRay()函数。这种额外复杂性的引入是由于我们没在camera接口使用虚函数，
-        这意味着CameraBase类需要有camera传入才能调用GenerateRay()方法
+        这个函数签名和Camera接口里的不同，此函数会在实现类里调用，这么做的原因是Camera不是用
+        虚表实现的，所以需要自己写调用
     */
     PBRT_CPU_GPU
     static pstd::optional<CameraRayDifferential> GenerateRayDifferential(
@@ -282,7 +283,7 @@ class CameraBase {
 
 // ProjectiveCamera Definition
 /*
-    投影相机： 从3d场景转换到2d图像的抽象，继承有正交和透视投影相机
+    投影相机： 子类包括正交相机和透视相机
 */
 class ProjectiveCamera : public CameraBase {
   public:
