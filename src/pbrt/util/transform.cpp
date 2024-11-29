@@ -120,10 +120,13 @@ PBRT_CPU_GPU Transform Orthographic(Float zNear, Float zFar) {
     步骤:
     1. 相机空间中的点p投影到观察平面上
     2. 根据fov缩放(x,y)，确保视场内的点投影到视平面上的坐标在[-1,1]的范围内
+
+    相机位置为原点，近平面即为胶片所在平面，离相机位置距离就是0.02f
 */
 PBRT_CPU_GPU Transform Perspective(Float fov, Float n, Float f) {
     // Perform projective divide for perspective projection
     // clang-format off
+    // 透视投影变换矩阵
 SquareMatrix<4> persp(1, 0,           0,              0,
                       0, 1,           0,              0,
                       0, 0, f / (f - n), -f*n / (f - n),
@@ -132,6 +135,7 @@ SquareMatrix<4> persp(1, 0,           0,              0,
 
     // Scale canonical perspective view to specified field of view
     Float invTanAng = 1 / std::tan(Radians(fov) / 2);
+    // 透视转换到近平面后缩放到[-1,1]
     return Scale(invTanAng, invTanAng, 1) * Transform(persp);
 }
 

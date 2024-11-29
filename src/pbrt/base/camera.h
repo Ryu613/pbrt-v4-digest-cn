@@ -46,15 +46,8 @@ class Camera : public TaggedPointer<PerspectiveCamera, OrthographicCamera,
     std::string ToString() const;
 
     /*
-        必须实现的方法，用于对应图像采样的光线的计算，返回的光线需要归一化
-        若给定的CameraSample对象由于一些原因没有有效的光线，那么pstd::optional
-        中的返回值需要被重置。
-
-        传入进来的SampleWavelengths(样本波长)不是常量引用，故相机就可以模拟镜头
-        的色散效果，在这种情况下，光线只追踪单一波长的光，并且 GenerateRay() 
-        方法将调用 SampledWavelengths::TerminateSecondary()
-
-        传入到此函数的CameraSample结构体，包含了相机光线需要的所有样本值。
+        子类必须实现，返回的光线要做归一化
+        注意：计算基于相机空间，光线是从相机位置作为原点，射向胶片的像素点位置，最后再转为渲染空间坐标
     */
     PBRT_CPU_GPU inline pstd::optional<CameraRay> GenerateRay(
         CameraSample sample, SampledWavelengths &lambda) const;

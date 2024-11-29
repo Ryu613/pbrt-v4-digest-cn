@@ -429,10 +429,11 @@ PBRT_CPU_GPU pstd::optional<CameraRay> PerspectiveCamera::GenerateRay(
     Point3f pFilm = Point3f(sample.pFilm.x, sample.pFilm.y, 0);
     Point3f pCamera = cameraFromRaster(pFilm);
 
-    // 用pCamera作为光线的方向
+    // 基于相机空间坐标系，原点为相机位置，朝胶片位置射出光线
     Ray ray(Point3f(0, 0, 0), Normalize(Vector3f(pCamera)), SampleTime(sample.time),
             medium);
     // Modify ray for depth of field
+    // 若镜片半径大于0，光线起始点改为镜片点，并更新光线原点和方向
     if (lensRadius > 0) {
         // Sample point on lens
         Point2f pLens = lensRadius * SampleUniformDiskConcentric(sample.pLens);

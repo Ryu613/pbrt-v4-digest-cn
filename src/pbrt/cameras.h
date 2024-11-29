@@ -294,13 +294,11 @@ class ProjectiveCamera : public CameraBase {
     std::string BaseToString() const;
 
     /*
-        除了CameraBase类需要的参数外，ProjectiveCamera也需拿到
-        投影变换矩阵、图像在屏幕空间的范围、焦距、和透镜光圈大小的参数
-        如果光圈不是一个无穷小的孔，那么图像中的一部分可能会模糊(在真实的透镜系统中，
-        聚焦范围外的物体会模糊)
-
-        ProjectiveCamera的实现类还会给出从相机到屏幕空间的投影矩阵，并传到此处这个基类中
-        初始化各种空间变换Transform对象
+        baseParameters: 相机基本参数
+        screenFromCamera: 从相机空间转到屏幕空间的变换矩阵
+        screenWindow: 屏幕窗口的范围(从左下到右上，中央是原点)
+        lensRadius: 镜片半径，0即为小孔相机(没有聚散焦效果)
+        focalDistance: 镜头离近平面距离，模拟镜片效果时需要
     */
     ProjectiveCamera(CameraBaseParameters baseParameters,
                      const Transform &screenFromCamera, Bounds2f screenWindow,
