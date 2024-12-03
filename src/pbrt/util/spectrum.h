@@ -33,10 +33,9 @@ namespace pbrt {
 // Spectrum Constants
 // 可见光波长范围
 constexpr Float Lambda_min = 360, Lambda_max = 830;
-
 // 要采样几个波长
 static constexpr int NSpectrumSamples = 4;
-
+// XYZ色彩空间里Y因子在可见光波长下的积分值，直接给出减少计算
 static constexpr Float CIE_Y_integral = 106.856895;
 
 // Spectrum Definition
@@ -391,7 +390,7 @@ class ConstantSpectrum {
 };
 
 /*
-    密集采样的光谱分布
+    密集采样光谱
     在给定波长范围内，以间隔1nm来采样的光谱分布
 */
 class DenselySampledSpectrum {

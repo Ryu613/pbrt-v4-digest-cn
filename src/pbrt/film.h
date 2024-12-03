@@ -101,6 +101,7 @@ class PixelSensor {
 
     PBRT_CPU_GPU
     RGB ToSensorRGB(SampledSpectrum L, const SampledWavelengths &lambda) const {
+        // 蒙特卡洛求三原色
         L = SafeDiv(L, lambda.PDF());
         return imagingRatio * RGB((r_bar.Sample(lambda) * L).Average(),
                                   (g_bar.Sample(lambda) * L).Average(),
