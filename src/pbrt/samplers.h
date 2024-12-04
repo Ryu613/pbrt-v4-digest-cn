@@ -802,6 +802,7 @@ PBRT_CPU_GPU inline Point2f Sampler::GetPixel2D() {
 // Sampler Inline Functions
 /*
     给出相机的采样点需要的信息
+    注意，这里的pPixel位置是基于屏幕空间坐标，x,y是每个像素点的左下角位置
 */
 template <typename S>
 inline PBRT_CPU_GPU CameraSample GetCameraSample(S sampler, Point2i pPixel,
@@ -813,7 +814,7 @@ inline PBRT_CPU_GPU CameraSample GetCameraSample(S sampler, Point2i pPixel,
     /*
         pPixel:图像的第x+1行第y+1列的像素点，假设像素之间间隔为1
         fs.p: 在滤波器半径里面的偏移量
-        Vector2f(0.5f,0.5f): pPixel位置在左上角，像素中心在(x+0.5,y+0.5)的位置
+        Vector2f(0.5f,0.5f): pPixel位置是以屏幕空间为准，在每个像素点左下角，像素中心在(x+0.5,y+0.5)的位置
     */
     cs.pFilm = pPixel + fs.p + Vector2f(0.5f, 0.5f);
     cs.time = sampler.Get1D();

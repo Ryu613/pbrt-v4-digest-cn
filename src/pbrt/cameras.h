@@ -296,7 +296,7 @@ class ProjectiveCamera : public CameraBase {
     /*
         baseParameters: 相机基本参数
         screenFromCamera: 从相机空间转到屏幕空间的变换矩阵
-        screenWindow: 屏幕窗口的范围(从左下到右上，中央是原点)
+        screenWindow: 屏幕窗口的范围(从左下到右上，中央是原点)(屏幕空间)
         lensRadius: 镜片半径，0即为小孔相机(没有聚散焦效果)
         focalDistance: 镜头离近平面距离，模拟镜片效果时需要
     */
@@ -309,13 +309,13 @@ class ProjectiveCamera : public CameraBase {
           focalDistance(focalDistance) {
         // Compute projective camera transformations
         // Compute projective camera screen transformations
-        /*
-            从屏幕空间转换到光栅空间，注意y轴是反过来的
-        */
+        // 屏幕空间原点在中心，要把坐标轴移动到左上角等效于原点往右下角移动
+        // 然后再除以屏幕尺寸的宽高，把x,y限定在[0,1]
         Transform NDCFromScreen =
             Scale(1 / (screenWindow.pMax.x - screenWindow.pMin.x),
                   1 / (screenWindow.pMax.y - screenWindow.pMin.y), 1) *
             Translate(Vector3f(-screenWindow.pMin.x, -screenWindow.pMax.y, 0));
+        // 光栅空间原点在左上角，这里y有个负号，因为之前缩放时没有把y倒过来
         Transform rasterFromNDC =
             Scale(film.FullResolution().x, -film.FullResolution().y, 1);
         rasterFromScreen = rasterFromNDC * NDCFromScreen;

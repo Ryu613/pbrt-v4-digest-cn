@@ -33,7 +33,7 @@ CameraTransform::CameraTransform(const AnimatedTransform &worldFromCamera) {
         // <<基于相机空间渲染>>
 
         /*
-            由于worldFromRender是不能被动画化，所以取了动画帧时间的中点(tMid)，然后
+            由于worldFromRender不能被动画化，所以取了动画帧时间的中点(tMid)，然后
             把这个点在相机变换中的动画，并入renderFromCamera
         */
         Float tMid = (worldFromCamera.startTime + worldFromCamera.endTime) / 2;
