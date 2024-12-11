@@ -475,7 +475,7 @@ SampledSpectrum SimplePathIntegrator::Li(RayDifferential ray, SampledWavelengths
 
         // Account for emissive surface if light was not sampled
         SurfaceInteraction &isect = si->intr;
-        // 如果不对光源采样，或上一个点是镜面反射，求出交点的Le,加到总光量上
+        // 如果不对光源采样，或上一个点是镜面反射，求出交点自发光(面光源)的Le,加到总光量上
         if (!sampleLights || specularBounce)
             L += beta * isect.Le(-ray.d, lambda);
 
@@ -547,7 +547,7 @@ SampledSpectrum SimplePathIntegrator::Li(RayDifferential ray, SampledWavelengths
             specularBounce = false;
             ray = isect.SpawnRay(wi);
         }
-
+        // 不能全图白也不能全图黑
         CHECK_GE(beta.y(lambda), 0.f);
         DCHECK(!IsInf(beta.y(lambda)));
     }
