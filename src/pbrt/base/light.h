@@ -38,7 +38,7 @@ struct LightLeSample;
 
 // Light Definition
 /*
-    所有光源必须实现此接口
+    光源顶层接口
 */
 class Light : public TaggedPointer<  // Light Source Types
                   PointLight, DistantLight, ProjectionLight, GoniometricLight, SpotLight,
@@ -60,7 +60,7 @@ class Light : public TaggedPointer<  // Light Source Types
                             const MediumInterface &mediumInterface, const Shape shape,
                             FloatTexture alpha, const FileLoc *loc, Allocator alloc);
 
-    // 核心接口，返回光源发出的光辐射功率Phi
+    // 返回光源的总功率，加权光源采样器PowerLightSampler会用到
     SampledSpectrum Phi(SampledWavelengths lambda) const;
 
     /*
@@ -74,7 +74,7 @@ class Light : public TaggedPointer<  // Light Source Types
     */
     PBRT_CPU_GPU inline LightType Type() const;
 
-    // 核心接口:根据参考点返回这个点接收到的辐射量等一系列有用的参数
+    // 核心接口:根据ctc里的参考点，若这个点可被照射到，返回这个点接收到此光源的辐射量，和其他有用的参数
     PBRT_CPU_GPU inline pstd::optional<LightLiSample> SampleLi(
         LightSampleContext ctx, Point2f u, SampledWavelengths lambda,
         bool allowIncompletePDF = false) const;
@@ -100,10 +100,12 @@ class Light : public TaggedPointer<  // Light Source Types
 
     pstd::optional<LightBounds> Bounds() const;
 
+    // 根据发光辐射分布来采样离开光源的光线，双向路径追踪有用
     PBRT_CPU_GPU
     pstd::optional<LightLeSample> SampleLe(Point2f u1, Point2f u2,
                                            SampledWavelengths &lambda, Float time) const;
 
+    // 双向路径追踪有用
     PBRT_CPU_GPU
     void PDF_Le(const Ray &ray, Float *pdfPos, Float *pdfDir) const;
 

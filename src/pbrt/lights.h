@@ -234,7 +234,9 @@ class PointLight : public LightBase {
 
   private:
     // PointLight Private Members
+    // 光源的光谱分布
     const DenselySampledSpectrum *I;
+    // 辐射度转流明的所放量
     Float scale;
 };
 

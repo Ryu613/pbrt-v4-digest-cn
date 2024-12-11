@@ -464,8 +464,8 @@ SampledSpectrum SimplePathIntegrator::Li(RayDifferential ray, SampledWavelengths
 
         // Account for infinite lights if ray has no intersection
         if (!si) {
-            // 若不对每个路径上的采样点估算光源照到其上的直接光照量，且这个点的上
-            // 一个点是镜面反射，要单独加上无限远面光源的量,若上一个点不是镜面
+            // 若不对光源采样，或这个点的上一个点是镜面反射，
+            // 要单独加上无限远面光源的量,若上一个点不是镜面
             // 反射，那么调用SampleLi()的时候已经加上了
             if (!sampleLights || specularBounce)
                 for (const auto &light : infiniteLights)
@@ -475,7 +475,7 @@ SampledSpectrum SimplePathIntegrator::Li(RayDifferential ray, SampledWavelengths
 
         // Account for emissive surface if light was not sampled
         SurfaceInteraction &isect = si->intr;
-        // 如果不采样该点的直接光照，且上一个点是镜面反射，要求出交点的Le,加到总光量上
+        // 如果不对光源采样，或上一个点是镜面反射，求出交点的Le,加到总光量上
         if (!sampleLights || specularBounce)
             L += beta * isect.Le(-ray.d, lambda);
 
@@ -529,14 +529,17 @@ SampledSpectrum SimplePathIntegrator::Li(RayDifferential ray, SampledWavelengths
             Float pdf;
             Vector3f wi;
             BxDFFlags flags = bsdf.Flags();
+            // 又会反射又会透射
             if (IsReflective(flags) && IsTransmissive(flags)) {
                 wi = SampleUniformSphere(sampler.Get2D());
                 pdf = UniformSpherePDF();
             } else {
                 wi = SampleUniformHemisphere(sampler.Get2D());
                 pdf = UniformHemispherePDF();
+                // 支持反射的BSDF并且wi,wo不同向(其一朝物体内，另一个朝物体外)，反转wi方向使之符合反射向量
                 if (IsReflective(flags) && Dot(wo, isect.n) * Dot(wi, isect.n) < 0)
                     wi = -wi;
+                // 透射时，出入射方向要不同
                 else if (IsTransmissive(flags) && Dot(wo, isect.n) * Dot(wi, isect.n) > 0)
                     wi = -wi;
             }
