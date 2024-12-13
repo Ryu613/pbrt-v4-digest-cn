@@ -399,16 +399,19 @@ class LinearColorEncoding;
 class sRGBColorEncoding;
 class GammaColorEncoding;
 
+// 对各种不同的图片格式提供色彩值编解码支持
 class ColorEncoding
     : public TaggedPointer<LinearColorEncoding, sRGBColorEncoding, GammaColorEncoding> {
   public:
     using TaggedPointer::TaggedPointer;
     // ColorEncoding Interface
+    // 把一组8-bit色彩值转换为一组线性的浮点值
     PBRT_CPU_GPU inline void ToLinear(pstd::span<const uint8_t> vin,
                                       pstd::span<Float> vout) const;
+    // 把一组浮点值转为一组8-bit色彩值
     PBRT_CPU_GPU inline void FromLinear(pstd::span<const Float> vin,
                                         pstd::span<uint8_t> vout) const;
-
+    // 把某个单独的编码后大于8-bit的颜色值转为浮点数
     PBRT_CPU_GPU inline Float ToFloatLinear(Float v) const;
 
     std::string ToString() const;
@@ -421,6 +424,7 @@ class ColorEncoding
     static void Init(Allocator alloc);
 };
 
+// 在8位颜色值和浮点数之间做转换(除/乘255)
 class LinearColorEncoding {
   public:
     PBRT_CPU_GPU
@@ -430,9 +434,11 @@ class LinearColorEncoding {
             vout[i] = vin[i] / 255.f;
     }
 
+    // 把255色彩值转到浮点
     PBRT_CPU_GPU
     Float ToFloatLinear(Float v) const { return v; }
 
+    // 把浮点转到255
     PBRT_CPU_GPU
     void FromLinear(pstd::span<const Float> vin, pstd::span<uint8_t> vout) const {
         DCHECK_EQ(vin.size(), vout.size());
@@ -443,13 +449,16 @@ class LinearColorEncoding {
     std::string ToString() const { return "[ LinearColorEncoding ]"; }
 };
 
+// 用于sRGB色彩空间转换，对于较小的值使用线性计算，对于较大值用幂计算
 class sRGBColorEncoding {
   public:
     // sRGBColorEncoding Public Methods
+    // 把编码后的8位颜色值，转回pbrt的浮点值
     PBRT_CPU_GPU
     void ToLinear(pstd::span<const uint8_t> vin, pstd::span<Float> vout) const;
     PBRT_CPU_GPU
     Float ToFloatLinear(Float v) const;
+    // 把pbrt中计算结果的浮点值，转为sRGB的8位颜色值
     PBRT_CPU_GPU
     void FromLinear(pstd::span<const Float> vin, pstd::span<uint8_t> vout) const;
 

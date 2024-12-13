@@ -391,7 +391,7 @@ class ConstantSpectrum {
 
 /*
     密集采样光谱
-    在给定波长范围内，以间隔1nm来采样的光谱分布
+    每个nm单位波长，对应一个光谱值，通过()操作符传入波长获取对应值
 */
 class DenselySampledSpectrum {
   public:
