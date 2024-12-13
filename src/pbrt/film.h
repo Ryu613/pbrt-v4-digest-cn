@@ -85,6 +85,7 @@ class PixelSensor {
         XYZFromSensorRGB = *m;
     }
 
+    // 默认：人眼
     PixelSensor(const RGBColorSpace *outputColorSpace, Spectrum sensorIllum,
                 Float imagingRatio, Allocator alloc)
         : r_bar(&Spectra::X(), alloc),
@@ -268,6 +269,7 @@ class RGBFilm : public FilmBase {
         RGB rgb = sensor->ToSensorRGB(L, lambda);
 
         // Optionally clamp sensor RGB value
+        // 为了解决亮点问题
         Float m = std::max({rgb.r, rgb.g, rgb.b});
         if (m > maxComponentValue)
             rgb *= maxComponentValue / m;
